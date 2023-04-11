@@ -473,12 +473,7 @@ void wifiMachine() {
   //
   // ==============================
   const unsigned long sinceChange = NOW - wifiStateChange;
-  if (sinceChange > 60)
   switch (wifiState) {
-  case WifiState::Error:
-  case WifiState::Connect:
-  case WifiState::Status:
-
   case WifiState::Idle:
     if (wifiBackoffCount >= 10) {
       wifiState = WifiState::Sleep;
