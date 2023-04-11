@@ -8,7 +8,7 @@ usage() {
   exit 1;
 }
 
-while getopts ":c:s:b:p:d:" o; do
+while getopts ":c:s:b:p:dtx" o; do
   case "${o}" in
     c)
       c=${OPTARG}
@@ -25,7 +25,14 @@ while getopts ":c:s:b:p:d:" o; do
     d)
       d="true"
       ;;
+    t)
+      t="true"
+      ;;
+    x)
+      x="true"
+      ;;
     *)
+    
       usage
       ;;
   esac
@@ -36,14 +43,20 @@ COMMAND=${c}
 SKETCH=${s:-Sonos}
 FQBN=${b:-arduino:samd:mkrwifi1010}
 PORT=${p:-/dev/cu.usbmodem4101}
-DEBUG=${d}
+
+EXTRA_FLAGS=""
+if [[ "$d" == "true" ]]; then
+  EXTRA_FLAGS="$EXTRA_FLAGS -DDEBUG"
+fi
+if [[ "$t" == "true" ]]; then
+  EXTRA_FLAGS="$EXTRA_FLAGS -DTRACE"
+fi
+if [[ "$x" == "true" ]]; then
+  EXTRA_FLAGS="$EXTRA_FLAGS -DPERF"
+fi
 
 function compile () {
-  if [[ "$DEBUG" == "true" ]]; then
-    arduino-cli compile --fqbn $FQBN "$SKETCH" --build-property "compiler.cpp.extra_flags=-DDEBUG"
-  else
-    arduino-cli compile --fqbn $FQBN "$SKETCH"
-  fi
+  arduino-cli compile --fqbn $FQBN "$SKETCH" --build-property "compiler.cpp.extra_flags=$EXTRA_FLAGS"
 }
 
 function upload () {
