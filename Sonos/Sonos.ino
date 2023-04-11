@@ -13,6 +13,7 @@
 #define TOP_Y 42
 #define TEXT_3_STEP 24
 #define TEXT_2_STEP 16
+#define SLEEP 60000
 #define NOW millis()
 
 
@@ -483,7 +484,7 @@ void wifiMachine() {
     break;
 
   case WifiState::Connected:
-    if (serverStateChange > 3600000 && commandStateChange > 3600000) {
+    if (NOW - serverStateChange > SLEEP && NOW - commandStateChange > SLEEP) {
       wifiState = WifiState::Sleep;
     } else if (sinceChange > 5000) {
       wifiState = WifiState::Status;
@@ -1041,9 +1042,21 @@ ButtonState buttonMachine(touchButtons btn) {
   if (touch && !lastTouch) {
     buttonPhysical[btn][0] = 1;
     buttonPhysical[btn][1] = NOW;
+    TRACE(btn);
+    TRACE(" TOUCH ");
+    TRACE(" LASTDOWN:");
+    TRACE(lastDown);
+    TRACE(" LASTUP:");
+    TRACELN(lastUp);
   } else if (!touch && lastTouch) {
     buttonPhysical[btn][0] = 0;
     buttonPhysical[btn][2] = NOW;
+    TRACE(btn);
+    TRACE(" NOTOUCH ");
+    TRACE(" LASTDOWN:");
+    TRACE(lastDown);
+    TRACE(" LASTUP:");
+    TRACELN(lastUp);
   }
 
   return(action);
