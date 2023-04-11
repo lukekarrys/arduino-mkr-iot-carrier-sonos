@@ -5,6 +5,7 @@
 #include <ArduinoJson.h>
 #include "Secrets.h"
 #include "SonosServer.h"
+#include "Debug.h"
 
 #define HOLD 600
 #define TAP 30
@@ -13,89 +14,9 @@
 #define TOP_Y 42
 #define TEXT_3_STEP 24
 #define TEXT_2_STEP 16
-#define SLEEP 60000
+#define SLEEP 3600000 // 1 hour
+#define COMMAND_TIMEOUT 1000
 #define NOW millis()
-
-
-#ifdef DEBUG
-  #define PRINT(...) Serial.print(__VA_ARGS__)
-  #define PRINTLN(...) Serial.println(__VA_ARGS__)
-#else
-  #define PRINT(...)
-  #define PRINTLN(...)
-#endif
-
-#ifdef TRACE
-  #define TRACE(...) Serial.print(__VA_ARGS__)
-  #define TRACELN(...) Serial.println(__VA_ARGS__)
-  #define DELAY(...) delay(__VA_ARGS__)
-  #define TRACE_STATE_CHANGE(name, prev, current, change) {\
-    Serial.print(name);\
-    Serial.print(" STATE CHANGE: ");\
-    Serial.print(static_cast<int>(prev));\
-    Serial.print(" -> ");\
-    Serial.print(static_cast<int>(current));\
-    Serial.print(" - ");\
-    Serial.print(NOW - change);\
-    Serial.println("ms");\
-  }
-#else
-  #define TRACE(...)
-  #define TRACELN(...)
-  #define DELAY(...)
-  #define TRACE_STATE_CHANGE(...)
-#endif
-
-#ifdef PERF
-  unsigned long PERF_LAST_LOOP = 0;
-  unsigned long PERF_LAST_COMMAND = 0;
-  unsigned long PERF_LAST_MACHINE = 0;
-  unsigned long PERF_LOOP_COUNT = 0;
-  #define PERF_LOOP() {\
-    if (PERF_LAST_LOOP > 0) {\
-      const unsigned long latest = NOW - PERF_LAST_LOOP;\
-      if (latest > 16) {\
-        Serial.print("LOOP PERF: ");\
-        Serial.print(latest);\
-        Serial.print("ms - COUNT: ");\
-        Serial.println(PERF_LOOP_COUNT);\
-        PERF_LOOP_COUNT = 0;\
-      }\
-    }\
-    PERF_LOOP_COUNT++;\
-    PERF_LAST_LOOP = NOW;\
-  }
-  #define PERF_COMMAND_START() {\
-    PERF_LAST_COMMAND = NOW;\
-  }
-  #define PERF_COMMAND_END(msg) {\
-    const unsigned long latest = NOW - PERF_LAST_COMMAND;\
-    Serial.print("COMMAND PERF ");\
-    Serial.print(msg);\
-    Serial.print(": ");\
-    Serial.println(latest);\
-    PERF_LAST_COMMAND = 0;\
-  }
-  #define PERF_MACHINE_START() {\
-    PERF_LAST_MACHINE = NOW;\
-  }
-  #define PERF_MACHINE_END(msg, slow) {\
-    const unsigned long latest = NOW - PERF_LAST_MACHINE;\
-    if (latest >= slow) {\
-      Serial.print("MACHINE PERF ");\
-      Serial.print(msg);\
-      Serial.print(": ");\
-      Serial.println(latest);\
-    }\
-    PERF_LAST_MACHINE = 0;\
-  }
-#else
-  #define PERF_LOOP()
-  #define PERF_COMMAND_START()
-  #define PERF_COMMAND_END(...)
-  #define PERF_MACHINE_START(...)
-  #define PERF_MACHINE_END(...)
-#endif
 
 MKRIoTCarrier carrier;
 
@@ -111,8 +32,8 @@ const uint32_t off = carrier.leds.Color(0, 0, 0);
 
 enum class ButtonState { Up, Down, Tap, Hold, TapHold, DoubleTap, Discard };
 ButtonState buttonState [5] = { ButtonState::Up, ButtonState::Up, ButtonState::Up, ButtonState::Up, ButtonState::Up };
-unsigned long buttonPhysical [5][2] = { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} };
-char buttonStateChange [5][2] = { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} };
+unsigned long buttonPrevDownUp [5][2] = { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} };
+char buttonPrevTouch [5] = { 0, 0, 0, 0, 0 };
 
 enum class WifiState { Init, Error, Connect, Status, Connected, Idle, Sleep };
 WifiState wifiState = WifiState::Init;
@@ -156,6 +77,7 @@ uint16_t displayBg;
 uint16_t displayFg;
 String displayTitle [2] = { "", "" };
 String displayMessage [2]  = { "", "" };
+String displayBattery [2]  = { "", "" };
 String volume [2]  = { "", "" };
 String artist [2]  = { "", "" };
 String title [2]  = { "", "" };
@@ -168,9 +90,10 @@ String playerAction [2] = { "", "" };
 bool mute [2]  = { false, false };
 bool playing [2]  = { false, false };
 
-void setDisplayColors(uint16_t bg, uint16_t fg) {
+void resetDisplay(uint16_t bg, uint16_t fg, bool textWrap) {
   carrier.display.fillScreen(bg);
   carrier.display.setTextColor(fg);
+  carrier.display.setTextWrap(textWrap);
   displayBg = bg;
   displayFg = fg;
 }
@@ -203,21 +126,46 @@ void overwriteString(String strs [2], int x, int y, uint16_t fgColor = displayFg
   }
 }
 
+void overwritePositionedString(String strs [2], int x, int y, int x2, int y2, uint16_t fgColor = displayFg, bool force = false) {
+  if (strs[0] != strs[1] || force) {
+    carrier.display.setCursor(x2, y2);
+    carrier.display.setTextColor(displayBg);
+    carrier.display.print(strs[1]);
+    carrier.display.setCursor(x, y);
+    carrier.display.setTextColor(fgColor);
+    carrier.display.print(strs[0]);
+    strs[1] = strs[0];
+  }
+}
+
 void displayStale() {
   displayDataChange = NOW;
 }
 
 void setTitle(String str) {
+  TRACE("Set title: ");
+  TRACELN(str);
   displayTitle[0] = str;
   displayStale();
 }
 
 void setMessage(String str) {
+  TRACE("Set message: ");
+  TRACELN(str);
   displayMessage[0] = str;
   displayStale();
 }
 
+void setBattery() {
+  const int battery = readBattery();
+  TRACE("Set battery: ");
+  TRACELN(battery);
+  displayBattery[0] = "Battery: " + String(battery) + "%";
+  displayStale();
+}
+
 void setPlayerState(String rawState) {
+  TRACE("Set player state: ");
   TRACELN(rawState);
 
   if (!rawState.length()) {
@@ -323,11 +271,14 @@ void setup() {
   // Set timeout to 0 so begin returns right away and the loop deals with
   // polling for connection status
   WiFi.setTimeout(0);
-  
+
   if (!carrier.begin()) {
     Serial.print("Error: no carrier");
     while (true);
   }
+
+  setupBattery();
+  setBattery();
 }
 
 void loop() {
@@ -378,7 +329,9 @@ void wifiMachine() {
     TRACE_STATE_CHANGE("WIFI", wifiPrevState, wifiState, wifiStateChange);
     switch (wifiState) {
     case WifiState::Init:
-      setTitle("Starting...");
+      PRINTLN("Init wifi machine");
+      setTitle("Starting");
+      setMessage("");
       // Deal with unrecoverable error states that require physical connections
       // or flashing firmware
       if (
@@ -390,10 +343,10 @@ void wifiMachine() {
       } else {
         wifiState = WifiState::Connect;
       }
-      PRINTLN("Init wifi machine");
       break;
 
     case WifiState::Error:
+      PRINTLN("WiFi Error:");
       carrier.Buzzer.beep(400, 20);
       displayState = DisplayState::Error;
       if (WiFi.status() == WL_NO_MODULE) {
@@ -406,18 +359,18 @@ void wifiMachine() {
         setTitle("Unknown WiFi Error");
       }
       setMessage("Fix the error and reboot");
-      PRINTLN("WiFi error");
       break;
 
     case WifiState::Connect:
+      PRINTLN("Begin wifi connection");
       carrier.Buzzer.beep(800, 20);
-      setTitle("Connecting...");
+      setTitle("WiFi:");
+      setMessage("Connecting");
       PERF_COMMAND_START();
       WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
       PERF_COMMAND_END("WiFi.begin");
       wifiState = WifiState::Status;
       ledState = LedState::BlinkOn;
-      PRINTLN("Begin wifi connection");
       break;
 
     case WifiState::Status:
@@ -427,7 +380,7 @@ void wifiMachine() {
           serverState = ServerState::Connect;
           ledState = LedState::Off;
           wifiBackoffCount = 0;
-          setTitle("Connected");
+          setMessage("Connected!");
           PRINT("WiFi connected: ");
           PRINT(WiFi.SSID());
           PRINT(" Signal: ");
@@ -446,22 +399,28 @@ void wifiMachine() {
     case WifiState::Idle:
       serverState = ServerState::Idle;
       wifiBackoffCount += 1;
+      setMessage("Checking in " + String(pow(2, wifiBackoffCount)) + "s");
       PRINT("WiFi backoff count: ");
       PRINTLN(wifiBackoffCount);
       break;
 
     case WifiState::Sleep:
+      PRINTLN("Sleeping WiFi");
+      carrier.Buzzer.beep(400, 20);
       serverState = ServerState::Idle;
       displayState = DisplayState::Sleep;
       WiFi.end();
-      if (wifiPrevState == WifiState::Connected) {
-        setTitle("Sleeping");
-        setMessage("Hold any button to wake");
+      setBattery();
+      if (serverState == ServerState::Error) {
+        setTitle("Sonos:");
+        setMessage("Could not to server, hold any button to try again");
+      } else if (wifiPrevState == WifiState::Connected) {
+        setTitle("Sleeping:");
+        setMessage("No changes for an hour, hold any button to wake");
       } else {
-        setTitle("No WiFi Found");
-        setMessage("Hold any button to try again");
+        setTitle("WiFi:");
+        setMessage("Could not connect, hold any button to try again");
       }
-      PRINTLN("Sleeping WiFi");
       break;
     }
 
@@ -488,6 +447,13 @@ void wifiMachine() {
       wifiState = WifiState::Sleep;
     } else if (sinceChange > 5000) {
       wifiState = WifiState::Status;
+    }
+    break;
+
+  case WifiState::Sleep:
+    if (sinceChange > 1000) {
+      setBattery();
+      wifiStateChange = NOW;
     }
     break;
   }
@@ -599,7 +565,8 @@ void serverMachine() {
     switch (serverState) {    
     case ServerState::Connect:
       displayState = DisplayState::Init;
-      setTitle("Sonos...");
+      setTitle("Sonos:");
+      setMessage("Connecting to event stream");
       PERF_COMMAND_START();
       client.get("/" + String(SONOS_ROOM) + "/events");
       PERF_COMMAND_END("client.get(/events)");
@@ -619,6 +586,7 @@ void serverMachine() {
       break;
 
     case ServerState::Connected:
+      setMessage("Connected");
       serverBackoffCount = 0;
       displayState = DisplayState::Player;
       commandState = CommandState::Ready;
@@ -651,10 +619,7 @@ void serverMachine() {
 
   case ServerState::Error:
     if (serverBackoffCount >= 10) {
-      setTitle("Could not connect to server");
-      setMessage("Reboot to try again");
-      serverState = ServerState::Idle;
-      displayState = DisplayState::Error;
+      wifiState = WifiState::Sleep;
     } else if (sinceChange > (1000 * pow(2, serverBackoffCount))) {
       serverState = ServerState::Connect;
     }
@@ -704,12 +669,11 @@ void commandMachine() {
       playerAction[0] = "";
       commandButton = -1;
       displayStale();
+      commandClient.stop();
       break;
 
     case CommandState::Connecting:
-      PERF_COMMAND_START();
       commandClient.stop();
-      PERF_COMMAND_END("commandClient.stop()");
       break;
     }
   }
@@ -722,6 +686,17 @@ void commandMachine() {
   if (commandPrevState != commandState) {
     TRACE_STATE_CHANGE("COMMAND ENTER", commandPrevState, commandState, commandStateChange);
     switch (commandState) {
+    case CommandState::Ready:
+    case CommandState::Idle:
+      ledState = LedState::Off;
+      buzzerState = BuzzerState::Off;
+      commandAction = "";
+      playerAction[0] = "";
+      commandButton = -1;
+      displayStale();
+      commandClient.stop();
+      break;
+  
     case CommandState::Success:
       buzzerState = BuzzerState::On;
       buzzerTone = 1200;
@@ -739,8 +714,8 @@ void commandMachine() {
       break;
 
     case CommandState::Connect:
-      if (commandPrevState == CommandState::Connecting) {
-        commandState = CommandState::Connecting;
+      if (commandPrevState == CommandState::Connecting || commandPrevState == CommandState::Idle) {
+        commandState = commandPrevState;
       } else {
         PERF_COMMAND_START();
         commandClient.get("/" + String(SONOS_ROOM) + "/" + commandAction);
@@ -779,7 +754,7 @@ void commandMachine() {
         PRINTLN(statusCode);
         commandState = statusCode == 200 ? CommandState::Success : CommandState::Error;
         buzzerState = BuzzerState::Off;
-      } else if (sinceChange > 500) {
+      } else if (sinceChange > COMMAND_TIMEOUT) {
         buzzerState = BuzzerState::Off;
         commandState = CommandState::Error;
       }
@@ -816,6 +791,25 @@ void displayMachine() {
   const bool displayHasNewState = displayPrevState != displayState;
   const bool displayHasNewData = displayDataChange > 0;
 
+    // ==============================
+  //
+  // EXIT STATES
+  //
+  // ==============================
+  if (displayHasNewState) {
+    switch (displayPrevState) {
+      case DisplayState::Sleep:
+      case DisplayState::Init:
+      case DisplayState::Error:
+        setTitle("");
+        setMessage("");
+        break;
+
+      case DisplayState::Player:
+        setPlayerState("");
+        break;
+    }
+  }
   // ==============================
   //
   // ENTER STATES
@@ -826,18 +820,15 @@ void displayMachine() {
     switch (displayState) {  
     case DisplayState::Sleep:
     case DisplayState::Init:
-      setDisplayColors(ST77XX_BLACK, ST77XX_WHITE);
-      carrier.display.setTextWrap(true);
+      resetDisplay(ST77XX_BLACK, ST77XX_WHITE, true);
       break;
 
     case DisplayState::Error:
-      setDisplayColors(ST77XX_RED, ST77XX_BLACK);
-      carrier.display.setTextWrap(true);
+      resetDisplay(ST77XX_RED, ST77XX_BLACK, true);
       break;
 
     case DisplayState::Player:
-      setDisplayColors(ST77XX_BLACK, ST77XX_WHITE);
-      carrier.display.setTextWrap(false);
+      resetDisplay(ST77XX_BLACK, ST77XX_WHITE, false);
       carrier.display.setTextSize(3);
       carrier.display.setCursor(MARGIN, MARGIN);
       carrier.display.print("-");
@@ -848,14 +839,16 @@ void displayMachine() {
       carrier.display.setCursor(215, 215);
       carrier.display.print(">");
 
-      carrier.display.setTextSize(2);
+      carrier.display.setTextSize(3);
       carrier.display.setCursor(MARGIN, TOP_Y + (TEXT_3_STEP * 3) + TEXT_2_STEP);
 
-      carrier.display.print("Repeat: ");
-      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_2_STEP);
-      carrier.display.print("Shuffle: ");
-      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_2_STEP);
-      carrier.display.print("Volume: ");
+      carrier.display.setTextSize(2);
+      carrier.display.print("Repeat:");
+      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
+      carrier.display.print("Shuffle:");
+      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
+      carrier.display.print("Volume:");
+      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
       break;
     }
   }
@@ -863,29 +856,32 @@ void displayMachine() {
   if (displayHasNewState || displayHasNewData) {
     const unsigned long sinceRedraw = NOW - displayStateChange;
 
-    PRINT("Redraw display: ");
-    PRINT(sinceRedraw);
-    PRINT(" - ");
-    PRINT(displayHasNewState ? "state" : "data");
-    PRINT(" - command state: ");
-    PRINT(static_cast<int>(commandState));
-    PRINTLN("");
+    TRACE("Redraw display: ");
+    TRACE(sinceRedraw);
+    TRACE(" - ");
+    TRACE(displayHasNewState ? "state" : "data");
+    TRACELN("");
 
     switch (displayState) {
     case DisplayState::Player:
       carrier.display.setTextSize(3);
-      overwriteString(playButton, 110, MARGIN);
+      overwritePositionedString(playButton, playButton[0].length() == 1 ? 111 : 102, MARGIN, playButton[1].length() == 1 ? 111 : 102, MARGIN);
       overwriteString(playerAction, MARGIN + TEXT_3_STEP * 2, 215,
-        commandState == CommandState::Success ? ST77XX_GREEN : commandState == CommandState::Error ? ST77XX_RED : ST77XX_WHITE, true);
+        commandState == CommandState::Success
+        ? ST77XX_GREEN
+        : commandState == CommandState::Error
+        ? ST77XX_RED
+        : ST77XX_WHITE,
+      true);
 
       overwriteString(title, MARGIN, TOP_Y);
       overwriteString(artist, MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
       overwriteString(album, MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
 
       carrier.display.setTextSize(2);
-      overwriteString(repeat, 120, carrier.display.getCursorY() + TEXT_3_STEP + TEXT_2_STEP);
-      overwriteString(shuffle, 120, carrier.display.getCursorY() + TEXT_2_STEP);
-      overwriteString(sound, 120, carrier.display.getCursorY() + TEXT_2_STEP);      
+      overwriteString(repeat, 110, carrier.display.getCursorY() + TEXT_3_STEP + TEXT_2_STEP);
+      overwriteString(shuffle, 110, carrier.display.getCursorY() + TEXT_3_STEP);
+      overwriteString(sound, 110, carrier.display.getCursorY() + TEXT_3_STEP);      
       break;
 
     default:
@@ -893,6 +889,7 @@ void displayMachine() {
       overwriteString(displayTitle, MARGIN, MARGIN);
       carrier.display.setTextSize(2);
       overwriteString(displayMessage, MARGIN, 50);
+      overwriteString(displayBattery, MARGIN, 220);
       break;
     }
 
@@ -933,7 +930,7 @@ void buttonsMachine() {
       sendCommand(TOUCH1, "volume/-5", "Vol -5");
       break;
     case ButtonState::Hold:
-      sendCommand(TOUCH1, "mute/toggle", mute[0] ? "Unmute" : "Mute");
+      sendCommand(TOUCH1, "togglemute", mute[0] ? "Unmute" : "Mute");
       break;
     }
 
@@ -942,10 +939,10 @@ void buttonsMachine() {
       sendCommand(TOUCH2, "playpause", playing[0] ? "Pause" : "Play");
       break;
     case ButtonState::DoubleTap:
-      sendCommand(TOUCH2, "shuffle/toggle", shuffle ? "Shuf Off" : "Shuf On");
+      sendCommand(TOUCH2, "shuffle/toggle", shuffle[0] == "on" ? "Shuf Off" : "Shuf On");
       break;
     case ButtonState::Hold:
-      sendCommand(TOUCH2, "repeat/toggle", "Repeat");
+      sendCommand(TOUCH2, "repeat/toggle", "Rep " + String(repeat[0] == "all" ? "One" : repeat[0] == "one" ? "None" : "All"));
       break;
     }
 
@@ -957,7 +954,7 @@ void buttonsMachine() {
       sendCommand(TOUCH3, "volume/+5", "Vol +5");
       break;
     case ButtonState::Hold:
-      sendCommand(TOUCH3, "mute/toggle", mute[0] ? "Unmute" : "Mute");
+      sendCommand(TOUCH3, "togglemute", mute[0] ? "Unmute" : "Mute");
       break;
     }
 
@@ -973,9 +970,8 @@ void buttonsMachine() {
 }
 
 ButtonState buttonMachine(touchButtons btn) {
-  const unsigned long lastDown = NOW - buttonPhysical[btn][0];
-  const unsigned long lastUp = NOW - buttonPhysical[btn][1];
-
+  const unsigned long lastDown = NOW - buttonPrevDownUp[btn][0];
+  const unsigned long lastUp = NOW - buttonPrevDownUp[btn][1];
   const bool touch = carrier.Buttons.getTouch(btn);
 
   // The buttons are capacitive and even at a non-sensitive config level
@@ -1038,25 +1034,25 @@ ButtonState buttonMachine(touchButtons btn) {
     break;
   }
 
-  const unsigned long lastTouch = buttonStateChange[btn][0];
+  const unsigned long lastTouch = buttonPrevTouch[btn];
   if (touch && !lastTouch) {
-    buttonPhysical[btn][0] = 1;
-    buttonPhysical[btn][1] = NOW;
+    buttonPrevTouch[btn] = 1;
+    buttonPrevDownUp[btn][0] = NOW;
     TRACE(btn);
-    TRACE(" TOUCH ");
-    TRACE(" LASTDOWN:");
+    TRACE(" DOWN - LASTDOWN:");
     TRACE(lastDown);
-    TRACE(" LASTUP:");
-    TRACELN(lastUp);
+    TRACE("ms LASTUP:");
+    TRACE(lastUp);
+    TRACELN("ms");
   } else if (!touch && lastTouch) {
-    buttonPhysical[btn][0] = 0;
-    buttonPhysical[btn][2] = NOW;
+    buttonPrevTouch[btn] = 0;
+    buttonPrevDownUp[btn][1] = NOW;
     TRACE(btn);
-    TRACE(" NOTOUCH ");
-    TRACE(" LASTDOWN:");
+    TRACE(" UP - LASTDOWN:");
     TRACE(lastDown);
-    TRACE(" LASTUP:");
-    TRACELN(lastUp);
+    TRACE("ms LASTUP:");
+    TRACE(lastUp);
+    TRACELN("ms");
   }
 
   return(action);

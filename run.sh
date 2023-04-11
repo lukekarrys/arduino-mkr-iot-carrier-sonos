@@ -42,7 +42,7 @@ shift $((OPTIND-1))
 COMMAND=${c}
 SKETCH=${s:-Sonos}
 FQBN=${b:-arduino:samd:mkrwifi1010}
-PORT=${p:-/dev/cu.usbmodem4101}
+PORT=${p:-/dev/cu.usbmodem3101}
 
 EXTRA_FLAGS=""
 if [[ "$d" == "true" ]]; then
@@ -76,5 +76,7 @@ elif [[ "$COMMAND" == "monitor" ]]; then
 else
   compile
   upload
-  monitor
+  if [[ $EXTRA_FLAGS == *" -D"* ]]; then
+    monitor
+  fi
 fi
