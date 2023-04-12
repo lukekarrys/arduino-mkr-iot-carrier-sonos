@@ -1,3 +1,4 @@
 Secrets.h
 /Debug*.ino
 /Debug*/
+.vscode/

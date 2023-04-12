@@ -3,12 +3,13 @@
 #include <Arduino_MKRIoTCarrier.h>
 #include <ArduinoHttpClient.h>
 #include <ArduinoJson.h>
+#include <URLEncoder.h>
 #include "Secrets.h"
 #include "SonosServer.h"
 #include "Debug.h"
 
-#define HOLD 600
-#define TAP 30
+#define HOLD 1000
+#define TAP 40
 #define DOUBLE_TAP 100
 #define MARGIN 5
 #define TOP_Y 42
@@ -16,10 +17,14 @@
 #define TEXT_2_STEP 16
 #define SLEEP 3600000 // 1 hour
 #define COMMAND_TIMEOUT 1000
+#define SUCCESS_TONE 523
+#define ERROR_TONE 262
+#define INFO_TONE 349
 #define NOW millis()
 
 MKRIoTCarrier carrier;
 
+String sonosRoom = SONOS_ROOM;
 WiFiClient wifi;
 HttpClient client = HttpClient(wifi, SONOS_SERVER, SONOS_PORT);
 WiFiClient commandWifi;
@@ -30,16 +35,21 @@ const uint32_t blue = carrier.leds.Color(0, 0, 255);
 const uint32_t green = carrier.leds.Color(0, 255, 0);
 const uint32_t off = carrier.leds.Color(0, 0, 0);
 
-enum class ButtonState { Up, Down, Tap, Hold, TapHold, DoubleTap, Discard };
-ButtonState buttonState [5] = { ButtonState::Up, ButtonState::Up, ButtonState::Up, ButtonState::Up, ButtonState::Up };
-unsigned long buttonPrevDownUp [5][2] = { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} };
-char buttonPrevTouch [5] = { 0, 0, 0, 0, 0 };
-
 enum class WifiState { Init, Error, Connect, Status, Connected, Idle, Sleep };
 WifiState wifiState = WifiState::Init;
 WifiState wifiPrevState = WifiState::Sleep;
 unsigned long wifiStateChange = 0;
 int wifiBackoffCount = 0;
+
+enum class ButtonsState { Locked, Unlocked };
+ButtonsState buttonsState = ButtonsState::Unlocked;
+ButtonsState buttonsPrevState = ButtonsState::Locked;
+unsigned long buttonsStateChange = 0;
+
+enum class ButtonState { Up, Down, Tap, Hold, TapHold, DoubleTap, Discard };
+ButtonState buttonState [5] = { ButtonState::Up, ButtonState::Up, ButtonState::Up, ButtonState::Up, ButtonState::Up };
+unsigned long buttonPrevDownUp [5][2] = { {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} };
+char buttonPrevTouch [5] = { 0, 0, 0, 0, 0 };
 
 enum class LedState { Off, On, BlinkOn, BlinkOff };
 LedState ledState = LedState::Off;
@@ -47,12 +57,14 @@ LedState ledPrevState = LedState::On;
 unsigned long ledStateChange = 0;
 uint32_t ledColor = blue;
 int ledButton [2] = { 0, 5 };
+unsigned long ledDuration = 0;
 
 enum class BuzzerState { Off, On };
 BuzzerState buzzerState = BuzzerState::Off;
 BuzzerState buzzerPrevState = BuzzerState::On;
 unsigned long buzzerStateChange = 0;
-unsigned long buzzerTone = 800;
+unsigned long buzzerTone = SUCCESS_TONE;
+unsigned long buzzerDuration = 0;
 
 enum class ServerState { Idle, Connect, Connecting, Connected, Error };
 ServerState serverState = ServerState::Idle;
@@ -156,11 +168,16 @@ void setMessage(String str) {
   displayStale();
 }
 
-void setBattery() {
+String getBattery() {
   const int battery = readBattery();
+  return(String(battery) + "%");
+}
+
+void setBattery() {
+  const String battery = getBattery();
   TRACE("Set battery: ");
   TRACELN(battery);
-  displayBattery[0] = "Battery: " + String(battery) + "%";
+  displayBattery[0] = "Battery: " + battery;
   displayStale();
 }
 
@@ -332,6 +349,7 @@ void wifiMachine() {
       PRINTLN("Init wifi machine");
       setTitle("Starting");
       setMessage("");
+      buttonsState = ButtonsState::Unlocked;
       // Deal with unrecoverable error states that require physical connections
       // or flashing firmware
       if (
@@ -347,7 +365,7 @@ void wifiMachine() {
 
     case WifiState::Error:
       PRINTLN("WiFi Error:");
-      carrier.Buzzer.beep(400, 20);
+      carrier.Buzzer.beep(ERROR_TONE, 20);
       displayState = DisplayState::Error;
       if (WiFi.status() == WL_NO_MODULE) {
         setTitle("WL_NO_MODULE");
@@ -363,7 +381,7 @@ void wifiMachine() {
 
     case WifiState::Connect:
       PRINTLN("Begin wifi connection");
-      carrier.Buzzer.beep(800, 20);
+      carrier.Buzzer.beep(INFO_TONE, 20);
       setTitle("WiFi:");
       setMessage("Connecting");
       PERF_COMMAND_START();
@@ -406,7 +424,7 @@ void wifiMachine() {
 
     case WifiState::Sleep:
       PRINTLN("Sleeping WiFi");
-      carrier.Buzzer.beep(400, 20);
+      carrier.Buzzer.beep(INFO_TONE, 20);
       serverState = ServerState::Idle;
       displayState = DisplayState::Sleep;
       WiFi.end();
@@ -451,7 +469,7 @@ void wifiMachine() {
     break;
 
   case WifiState::Sleep:
-    if (sinceChange > 1000) {
+    if (sinceChange > 60000) {
       setBattery();
       wifiStateChange = NOW;
     }
@@ -499,7 +517,13 @@ void ledMachine() {
   //
   // ==============================
   const unsigned long sinceChange = NOW - ledStateChange;
-  switch (ledState) {  
+  switch (ledState) {
+  case LedState::On:
+    if (ledDuration && sinceChange > ledDuration) {
+      ledState = LedState::Off;
+    }
+    break;
+
   case LedState::BlinkOn:
     if (sinceChange >= 200) {
       ledState = LedState::BlinkOff;
@@ -543,6 +567,15 @@ void buzzerMachine() {
     buzzerStateChange = NOW;
   }
 
+  const unsigned long sinceChange = NOW - buzzerStateChange;
+  switch (buzzerState) {    
+  case BuzzerState::On:
+    if (buzzerDuration && sinceChange > buzzerDuration) {
+      buzzerState = BuzzerState::Off;
+    }
+    break;
+  }
+
   buzzerPrevState = enterState;
 }
 
@@ -564,11 +597,12 @@ void serverMachine() {
     TRACE_STATE_CHANGE("SERVER", serverPrevState, serverState, serverStateChange);
     switch (serverState) {    
     case ServerState::Connect:
+      client.stop();
       displayState = DisplayState::Init;
       setTitle("Sonos:");
-      setMessage("Connecting to event stream");
+      setMessage("Connecting to " + sonosRoom);
       PERF_COMMAND_START();
-      client.get("/" + String(SONOS_ROOM) + "/events");
+      client.get("/" + URLEncoderClass::encode(sonosRoom) + "/events");
       PERF_COMMAND_END("client.get(/events)");
       serverState = ServerState::Connecting;
       PRINTLN("GET /events");
@@ -663,10 +697,9 @@ void commandMachine() {
     switch (commandPrevState) {        
     case CommandState::Success:
     case CommandState::Error:
-      ledState = LedState::Off;
       buzzerState = BuzzerState::Off;
       commandAction = "";
-      playerAction[0] = "";
+      playerAction[0] = getBattery();
       commandButton = -1;
       displayStale();
       commandClient.stop();
@@ -688,10 +721,9 @@ void commandMachine() {
     switch (commandState) {
     case CommandState::Ready:
     case CommandState::Idle:
-      ledState = LedState::Off;
       buzzerState = BuzzerState::Off;
       commandAction = "";
-      playerAction[0] = "";
+      playerAction[0] = getBattery();
       commandButton = -1;
       displayStale();
       commandClient.stop();
@@ -699,38 +731,34 @@ void commandMachine() {
   
     case CommandState::Success:
       buzzerState = BuzzerState::On;
-      buzzerTone = 1200;
-      ledState = LedState::On;
-      ledColor = green;
+      buzzerTone = SUCCESS_TONE;
+      buzzerDuration = 40;
       displayStale();
       break;
 
     case CommandState::Error:
       buzzerState = BuzzerState::On;
-      buzzerTone = 400;
-      ledState = LedState::On;
-      ledColor = red;
+      buzzerTone = ERROR_TONE;
+      buzzerDuration = 40;
       displayStale();
       break;
 
     case CommandState::Connect:
-      if (commandPrevState == CommandState::Connecting || commandPrevState == CommandState::Idle) {
-        commandState = commandPrevState;
-      } else {
-        PERF_COMMAND_START();
-        commandClient.get("/" + String(SONOS_ROOM) + "/" + commandAction);
-        PERF_COMMAND_END("commandClient.get(/action)");
-        commandState = CommandState::Connecting;
-        buzzerState = BuzzerState::On;
-        buzzerTone = 800;
-        ledState = LedState::BlinkOn;
-        ledButton[0] = commandButton;
-        ledButton[1] = 1;
-        ledColor = blue;
-        displayStale();
-        PRINT("GET ");
-        PRINTLN(commandAction);
-      }
+      PERF_COMMAND_START();
+      commandClient.get("/" + URLEncoderClass::encode(sonosRoom) + "/" + commandAction);
+      PERF_COMMAND_END("commandClient.get(/action)");
+      commandState = CommandState::Connecting;
+      buzzerState = BuzzerState::On;
+      buzzerTone = INFO_TONE;
+      buzzerDuration = 0;
+      // blue led while the request is running
+      ledState = LedState::On;
+      ledButton[0] = commandButton;
+      ledButton[1] = 1;
+      ledColor = blue;
+      displayStale();
+      PRINT("GET ");
+      PRINTLN(commandAction);
       break;
     }
 
@@ -745,26 +773,21 @@ void commandMachine() {
   const unsigned long sinceChange = NOW - commandStateChange;
   switch (commandState) {
     case CommandState::Connecting:
-      if (sinceChange > 20) {
-        buzzerState = BuzzerState::Off;
-      }
       if (commandClient.available()) {
         int statusCode = commandClient.responseStatusCode();
         PRINT("Code: ");
         PRINTLN(statusCode);
         commandState = statusCode == 200 ? CommandState::Success : CommandState::Error;
+        ledState = LedState::Off;
         buzzerState = BuzzerState::Off;
       } else if (sinceChange > COMMAND_TIMEOUT) {
-        buzzerState = BuzzerState::Off;
         commandState = CommandState::Error;
+        buzzerState = BuzzerState::Off;
       }
     break;
 
   case CommandState::Success:
   case CommandState::Error:
-    if (sinceChange > 20) {
-      buzzerState = BuzzerState::Off;
-    }
     if (sinceChange > 500) {
       commandState = CommandState::Ready;
     }
@@ -775,10 +798,13 @@ void commandMachine() {
 }
 
 void sendCommand(int button, String action, String msg) {
-  commandState = CommandState::Connect;
-  commandAction = action;
-  commandButton = button;
-  playerAction[0] = msg;
+  if (commandPrevState != CommandState::Connecting && commandPrevState != CommandState::Idle) {
+    // No concurrent requests or if the server is not connected
+    commandState = CommandState::Connect;
+    commandAction = action;
+    commandButton = button;
+    playerAction[0] = msg;
+  }
 }
 
 // ==============================
@@ -798,16 +824,16 @@ void displayMachine() {
   // ==============================
   if (displayHasNewState) {
     switch (displayPrevState) {
-      case DisplayState::Sleep:
-      case DisplayState::Init:
-      case DisplayState::Error:
-        setTitle("");
-        setMessage("");
-        break;
+    case DisplayState::Sleep:
+    case DisplayState::Init:
+    case DisplayState::Error:
+      // setTitle("");
+      // setMessage("");
+      break;
 
-      case DisplayState::Player:
-        setPlayerState("");
-        break;
+    case DisplayState::Player:
+      setPlayerState("");
+      break;
     }
   }
   // ==============================
@@ -862,14 +888,23 @@ void displayMachine() {
     TRACE(displayHasNewState ? "state" : "data");
     TRACELN("");
 
+    int16_t  x1, y1;
+    uint16_t w, h, playAction1X, playAction2X;
+
     switch (displayState) {
     case DisplayState::Player:
       carrier.display.setTextSize(3);
       overwritePositionedString(playButton, playButton[0].length() == 1 ? 111 : 102, MARGIN, playButton[1].length() == 1 ? 111 : 102, MARGIN);
-      overwriteString(playerAction, MARGIN + TEXT_3_STEP * 2, 215,
+
+      carrier.display.getTextBounds(playerAction[0], 0, 0, &x1, &y1, &w, &h);
+      playAction1X = (240 - w) / 2;
+      carrier.display.getTextBounds(playerAction[1], 0, 0, &x1, &y1, &w, &h);
+      playAction2X = (240 - w) / 2;
+
+      overwritePositionedString(playerAction, playAction1X, 215, playAction2X, 215,
         commandState == CommandState::Success
         ? ST77XX_GREEN
-        : commandState == CommandState::Error
+        : commandState == CommandState::Error || buttonsState == ButtonsState::Locked
         ? ST77XX_RED
         : ST77XX_WHITE,
       true);
@@ -901,24 +936,69 @@ void displayMachine() {
 }
 
 void buttonsMachine() {
+  const ButtonsState enterState = buttonsState;
+
   carrier.Buttons.update();
+
   if (wifiState == WifiState::Sleep) {
-    if (
-      buttonMachine(TOUCH0) == ButtonState::Hold ||
-      buttonMachine(TOUCH1) == ButtonState::Hold ||
-      buttonMachine(TOUCH2) == ButtonState::Hold ||
-      buttonMachine(TOUCH3) == ButtonState::Hold ||
-      buttonMachine(TOUCH4) == ButtonState::Hold
-    ) {
+    if (buttonMachine(TOUCH4) == ButtonState::TapHold) {
       wifiState = WifiState::Init;
     }
-  } else {
+    return;
+  }
+
+  // ==============================
+  //
+  // ENTER STATES
+  //
+  // ==============================
+  if (buttonsPrevState != buttonsState) {
+    TRACE_STATE_CHANGE("BUTTONS", buttonsPrevState, buttonsState, buttonsStateChange);
+    switch (buttonsState) {    
+    case ButtonsState::Locked:
+      playerAction[0] = "Locked";
+      buzzerState = BuzzerState::On;
+      buzzerTone = INFO_TONE;
+      buzzerDuration = 40;
+      displayStale();
+      break;
+
+    case ButtonsState::Unlocked:
+      playerAction[0] = "";
+      buzzerState = BuzzerState::On;
+      buzzerTone = INFO_TONE;
+      buzzerDuration = 40;
+      displayStale();
+      break;
+    }
+
+    buttonsStateChange = NOW;
+  }
+
+    // ==============================
+  //
+  // POLL STATES
+  //
+  // ==============================
+  const unsigned long sinceChange = NOW - buttonsStateChange;
+  switch (buttonsState) {
+  case ButtonsState::Locked:
+    if (buttonMachine(TOUCH4) == ButtonState::TapHold) {
+      buttonsState = ButtonsState::Unlocked;
+    }
+    break;
+
+  case ButtonsState::Unlocked:
     switch (buttonMachine(TOUCH0)) {
     case ButtonState::Tap:
       sendCommand(TOUCH0, "previous", "Prev");
       break;
     case ButtonState::DoubleTap:
       sendCommand(TOUCH0, "trackseek/1", "Start");
+      break;
+    case ButtonState::TapHold:
+      sonosRoom = sonosRoom == SONOS_ROOM ? "Kitchen" : SONOS_ROOM;
+      serverState = ServerState::Connect;
       break;
     }
     
@@ -965,8 +1045,15 @@ void buttonsMachine() {
     case ButtonState::Hold:
       wifiState = WifiState::Sleep;
       break;
+    case ButtonState::TapHold:
+      buttonsState = ButtonsState::Locked;
+      break;
     }
+    break;
   }
+
+
+  buttonsPrevState = enterState;
 }
 
 ButtonState buttonMachine(touchButtons btn) {
