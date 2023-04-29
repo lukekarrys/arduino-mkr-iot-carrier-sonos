@@ -30,11 +30,12 @@ class WiFiMachine : public StateMachine {
   void ready();
   bool isConnected();
 
-  void poll(int state, unsigned long since) override;
-  void enter(int enterState, int exitState, unsigned long since) override;
-
   int backoffCount = 0;
   String errorReason;
+
+ protected:
+  void poll(int state, unsigned long since) override;
+  void enter(int enterState, int exitState, unsigned long since) override;
 
  private:
   const char *ssid;

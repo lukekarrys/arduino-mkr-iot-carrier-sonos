@@ -54,7 +54,7 @@ void ButtonMachine::enter(int state, int exitState, unsigned long sinceChange) {
   }
 }
 
-void ButtonMachine::poll(int buttonState, unsigned long sinceChange) {
+void ButtonMachine::poll(int state, unsigned long sinceChange) {
   const bool touch = this->getTouch();
 
   const unsigned long lastDown = NOW - prevDown;
@@ -66,9 +66,9 @@ void ButtonMachine::poll(int buttonState, unsigned long sinceChange) {
   // tapping and could never get it under 30ms, so anything under 30ms is
   // deemed noise which means we just reset the button state to up.
   const bool discard = touch ? lastUp < TAP : lastDown < TAP;
-  const int state = discard ? Discard : buttonState;
+  const int switchState = discard ? Discard : state;
 
-  switch (state) {
+  switch (switchState) {
     case Up:
       if (touch) {
         this->setState(Down);
@@ -117,10 +117,10 @@ void ButtonMachine::poll(int buttonState, unsigned long sinceChange) {
   if (touch && !prevTouch) {
     prevTouch = 1;
     prevDown = NOW;
-    DEBUG_MACHINE("TOUCH_DOWN", state, "");
+    DEBUG_MACHINE("TOUCH_DOWN", switchState, "");
   } else if (!touch && prevTouch) {
     prevTouch = 0;
     prevUp = NOW;
-    DEBUG_MACHINE("TOUCH_UP", state, "");
+    DEBUG_MACHINE("TOUCH_UP", switchState, "");
   }
 }

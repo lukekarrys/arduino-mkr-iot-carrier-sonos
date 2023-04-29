@@ -3,6 +3,9 @@
 #include "Carrier.h"
 #include "Utils.h"
 
+#define ROOMS_WAIT 2000
+#define RESULT_WAIT 1000
+
 #ifndef DEBUG_PLAYER
 #define DEBUG_PLAYER false
 #endif
@@ -64,9 +67,12 @@ void PlayerMachine::reset() {
 }
 
 void PlayerMachine::resetAction() {
+  if (actionButton != -1) {
+    ledMachines[actionButton]->off();
+  }
   actionMessage = "";
   actionButton = -1;
-  actionSuccess = 0;
+  actionError = false;
 }
 
 void PlayerMachine::resetButtons() {
@@ -86,8 +92,8 @@ void PlayerMachine::resetLeds() {
 }
 
 bool PlayerMachine::isConnected() {
-  const int state = this->getState();
-  return state != Error && state != Connect;
+  const int connectedState = this->getState();
+  return connectedState != Error && connectedState != Connect;
 }
 
 bool PlayerMachine::isSleepy() {
@@ -115,7 +121,7 @@ void PlayerMachine::readyLeds() {
   led4Machine.ready();
 }
 
-int PlayerMachine::run() {
+void PlayerMachine::run() {
   StateMachine::run();
 
   button0Machine.run();
@@ -144,6 +150,7 @@ void PlayerMachine::exit(int state, int enterState) {
 
     case Locked:
       displayMachine->drawPlayerControls(ST77XX_WHITE);
+      commandMachine.resetSinceChange();
       break;
   }
 }
@@ -154,7 +161,7 @@ void PlayerMachine::enter(int state, int exitState, unsigned long sinceChange) {
       sonosMachine.ready();
       commandMachine.reset();
       ledsMachine->blink(LedYellow, FAST_BLINK);
-      displayMachine->sonos("Sonos:", "Connecting");
+      displayMachine->sonos("Sonos:", "Connecting to room:");
       this->resetButtons();
       break;
 
@@ -172,31 +179,21 @@ void PlayerMachine::enter(int state, int exitState, unsigned long sinceChange) {
       break;
 
     case Action:
-      DEBUG_MACHINE("ACTION", actionButton);
-      if (actionButton != -1) {
-        ledMachines[actionButton]->on(LedBlue);
-      }
-      carrier.Buzzer.beep(800, 20);
+      DEBUG_MACHINE("ACTION", actionMessage);
       displayMachine->setPlayerAction(actionMessage);
       break;
 
     case Result:
-      DEBUG_MACHINE("RESULT", String(actionButton) + " / " + String(actionSuccess));
-      if (!actionSuccess) {
-        carrier.Buzzer.beep(400, 20);
+      DEBUG_MACHINE("RESULT", String(actionButton) + " / " + String(actionError));
+      if (actionError) {
+        carrier.Buzzer.beep(SAD_BEEP, 20);
       }
-      if (actionButton != -1) {
-        ledMachines[actionButton]->off();
-      }
-      displayMachine->setPlayerAction(actionMessage, actionSuccess ? ST77XX_GREEN : ST77XX_RED);
+      commandMachine.ready();
+      displayMachine->setPlayerAction(actionMessage, actionError ? ST77XX_RED : ST77XX_GREEN);
       this->resetAction();
       break;
 
     case Locked:
-      if (actionButton != -1) {
-        ledMachines[actionButton]->on(LedBlue);
-      }
-      carrier.Buzzer.beep(600, 20);
       displayMachine->setPlayerAction(sonosMachine.getRoom());
       displayMachine->drawPlayerControls(ST77XX_RED);
       break;
@@ -234,7 +231,7 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
 
   switch (state) {
     case Connected:
-      if (sinceChange > 2000) {
+      if (sinceChange > ROOMS_WAIT) {
         this->setState(Ready);
       }
       break;
@@ -247,7 +244,7 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
     case Action:
       this->handleCommand();
       if (sinceChange > TIMEOUT) {
-        actionSuccess = 0;
+        actionError = true;
         this->setState(Result);
       }
       break;
@@ -255,7 +252,7 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
     case Result:
       this->handleButtons();
       this->handleCommand();
-      if (sinceChange > TIMEOUT) {
+      if (commandMachine.getSinceChange() > RESULT_WAIT) {
         this->setState(Ready);
       }
       break;
@@ -263,7 +260,6 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
     case Locked:
       this->handleButtons();
       if (sinceChange > FAST_BLINK && actionButton != -1) {
-        ledMachines[actionButton]->off();
         this->resetAction();
       }
       break;
@@ -277,18 +273,20 @@ void PlayerMachine::handleCommand() {
       break;
 
     case CommandMachine::Success:
-      actionSuccess = 1;
       this->setState(Result);
       break;
 
     case CommandMachine::Error:
-      actionSuccess = 0;
+      actionError = true;
       this->setState(Result);
       break;
   }
 }
 
 void PlayerMachine::handleButtons() {
+  if (actionButton != -1) {
+    return;
+  }
   if (button4Machine.getState() == ButtonMachine::TapHold) {
     actionButton = 4;
     this->setState(this->getState() == Locked ? Ready : Locked);
@@ -304,6 +302,11 @@ void PlayerMachine::handleButtons() {
     } else if (this->button4(button4Machine.getState())) {
       actionButton = 4;
     }
+  }
+  if (actionButton != -1) {
+    DEBUG_MACHINE("HANDLE_BUTTON", actionButton);
+    carrier.Buzzer.beep(HAPPY_BEEP, 20);
+    ledMachines[actionButton]->on(LedBlue);
   }
 }
 
@@ -410,5 +413,5 @@ bool PlayerMachine::button4(int action) {
       return true;
   }
 
-  return -1;
+  return false;
 }

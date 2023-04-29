@@ -45,15 +45,12 @@ String StateMachine::stateString(int index) {
 }
 
 void StateMachine::setState(int newState) {
+  TRACE_MACHINE("SET_STATE", newState, "");
   state = newState;
 }
 
 int StateMachine::getState() {
   return (state);
-}
-
-int StateMachine::getPrevState() {
-  return (prevState);
 }
 
 unsigned long StateMachine::getSinceChange() {
@@ -68,12 +65,11 @@ void StateMachine::nextState(int inititalState) {
   runState = Polling;
   this->resetSinceChange();
   prevState = inititalState;
+  DEBUG_MACHINE("NEXT_STATE", prevState, "");
 }
 
-int StateMachine::run() {
+void StateMachine::run() {
   const int initialState = state;
-
-  returnRunState = -1;
 
   switch (runState) {
     case Polling:
@@ -89,8 +85,6 @@ int StateMachine::run() {
       runPoll();
       break;
   }
-
-  return returnRunState;
 }
 
 bool StateMachine::runExit() {
@@ -112,16 +106,18 @@ bool StateMachine::runEnter(int initialState) {
     return (false);
   }
 
+  DEBUG_MACHINE("RUN_STATE", runState == 0 ? "Polling" : runState == 1 ? "Entered"
+                                                                       : "Exited");
   DEBUG_MACHINE("ENTER", state, String(this->getSinceChange()) + "ms");
 
   this->enter(state, prevState, this->getSinceChange());
 
   if (initialState != -1 && initialState != state) {
+    DEBUG_MACHINE("ENTER_EXIT_INITIAL", initialState, "");
+    DEBUG_MACHINE("ENTER_EXIT_STATE", state, "");
     this->nextState(initialState);
-    returnRunState = initialState;
   } else {
     runState = Entered;
-    returnRunState = state;
   }
 
   return (true);

@@ -33,22 +33,23 @@ class PlayerMachine : public StateMachine {
   };
   static States states;
 
-  int run();
+  void run();
   void reset();
   void ready();
   bool isConnected();
   bool isSleepy();
 
+  String errorReason = "";
+
+ protected:
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;
   void exit(int exitState, int enterState) override;
 
-  String errorReason = "";
-
  private:
   int actionButton = -1;
   String actionMessage = "";
-  char actionSuccess = 0;
+  bool actionError = false;
   void resetAction();
 
   SonosMachine sonosMachine;

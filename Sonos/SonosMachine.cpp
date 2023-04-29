@@ -57,6 +57,7 @@ void SonosMachine::ready() {
 
 void SonosMachine::backoff(String reason) {
   errorReason = reason;
+  DEBUG_MACHINE("BACKOFF", errorReason);
   this->setState(Backoff);
 }
 
@@ -81,6 +82,12 @@ String SonosMachine::getRoom() {
   return rooms[roomIndex];
 }
 
+void SonosMachine::get(String url) {
+  unsigned long getPerf = NOW;
+  client.get(url);
+  DEBUG_MACHINE(url, String(NOW - getPerf) + "ms");
+}
+
 void SonosMachine::enter(int state, int exitState, unsigned long sinceChange) {
   switch (state) {
     case Error:
@@ -95,12 +102,12 @@ void SonosMachine::enter(int state, int exitState, unsigned long sinceChange) {
 
     case Zones:
       client.stop();
-      client.get("/zones/names");
+      this->get("/zones/names");
       break;
 
     case Connect:
       client.stop();
-      client.get("/" + URLEncoderClass::encode(this->getRoom()) + "/events");
+      this->get("/" + URLEncoderClass::encode(this->getRoom()) + "/events");
       break;
 
     case Connected:
@@ -115,9 +122,6 @@ void SonosMachine::enter(int state, int exitState, unsigned long sinceChange) {
 }
 
 void SonosMachine::poll(int state, unsigned long sinceChange) {
-  bool didUpdate = false;
-  int statusCode;
-
   switch (state) {
     case Zones:
       if (sinceChange > TIMEOUT) {
@@ -126,7 +130,7 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
         if (client.endOfHeadersReached()) {
           this->setRooms(client.responseBody());
         } else {
-          statusCode = client.responseStatusCode();
+          int statusCode = client.responseStatusCode();
           if (statusCode == SUCCESS) {
             client.skipResponseHeaders();
           } else {
@@ -140,7 +144,7 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
       if (sinceChange > TIMEOUT) {
         this->backoff("Timeout connecting to /events");
       } else if (client.available()) {
-        statusCode = client.responseStatusCode();
+        int statusCode = client.responseStatusCode();
         if (statusCode == SUCCESS) {
           this->setState(Connected);
         } else {
@@ -164,6 +168,7 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
         const char c = client.read();
         if (c == '\n') {
           response.remove(0, 6);
+          bool didUpdate = false;
           if (response.length()) {
             didUpdate = this->setSonos(response);
           }

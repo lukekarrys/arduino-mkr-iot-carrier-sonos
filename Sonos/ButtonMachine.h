@@ -40,14 +40,15 @@ class ButtonMachine : public StateMachine {
 
   void reset();
   void ready();
-  bool getTouch();
 
+ protected:
   bool traceState(int state, String type) override;
-
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;
 
  private:
+  bool getTouch();
+
   const touchButtons button;
 
   unsigned long prevDown = 0;

@@ -33,9 +33,6 @@ class SonosMachine : public StateMachine {
   void reset();
   void ready();
 
-  void poll(int state, unsigned long since) override;
-  void enter(int enterState, int exitState, unsigned long since) override;
-
   bool isConnected();
   void sendRequest(String path);
 
@@ -57,9 +54,14 @@ class SonosMachine : public StateMachine {
 
   String errorReason;
 
+ protected:
+  void poll(int state, unsigned long since) override;
+  void enter(int enterState, int exitState, unsigned long since) override;
+
  private:
   WiFiClient wifi;
   HttpClient client;
+  void get(String url);
 
   int backoffCount = 0;
   void backoff(String reason);

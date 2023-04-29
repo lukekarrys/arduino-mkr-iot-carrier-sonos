@@ -1,6 +1,7 @@
 #ifndef APP_MACHINE_H
 #define APP_MACHINE_H
 
+#include "BatteryMachine.h"
 #include "ButtonMachine.h"
 #include "DisplayMachine.h"
 #include "LedMachine.h"
@@ -19,7 +20,7 @@ class AppMachine : public StateMachine {
     Sleep,
     Error,
   };
-  String stateStrings[5] = {
+  String stateStrings[4] = {
       "WiFi",
       "Player",
       "Sleep",
@@ -30,8 +31,9 @@ class AppMachine : public StateMachine {
   bool isConnected();
   void reset();
   void ready();
-  int run();
+  void run();
 
+ protected:
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;
 
@@ -41,6 +43,7 @@ class AppMachine : public StateMachine {
   ButtonMachine buttonMachine;
   PlayerMachine playerMachine;
   DisplayMachine displayMachine;
+  BatteryMachine batteryMachine;
 
   String errorReason = "";
 };

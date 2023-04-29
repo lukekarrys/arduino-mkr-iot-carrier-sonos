@@ -93,7 +93,7 @@ void WiFiMachine::poll(int state, unsigned long sinceChange) {
       break;
 
     case Connected:
-      if (sinceChange > CHECK_WIFI) {
+      if (sinceChange > WIFI_CHECK) {
         if (WiFi.status() != WL_CONNECTED) {
           this->setState(Check);
         } else {

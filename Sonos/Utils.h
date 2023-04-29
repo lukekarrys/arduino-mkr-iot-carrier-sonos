@@ -5,6 +5,8 @@
 #define MINUTE 60000
 #define SLEEP 1800000
 #define LOCK 300000
+#define WIFI_CHECK 10000
+#define BATTERY_CHECK 60000
 
 #define HOLD 1000
 #define TAP 40
@@ -15,9 +17,23 @@
 
 #define SUCCESS 200
 
-#define CHECK_WIFI 10000
+#define HAPPY_BEEP 800
+#define SAD_BEEP 400
 
 #define FAST_BLINK 100
+
+#define TOP_Y 42
+#define TEXT_3_STEP 24
+#define TEXT_3_CHAR 9
+#define TEXT_2_STEP 16
+#define MARGIN 5
+
+#define WIDTH 240
+#define CENTER 120
+
+#define MESSAGE 50
+#define CONTROLS 215
+#define PLAY_STATE 110
 
 #ifdef DEBUG
 #define PRINT(...) Serial.print(__VA_ARGS__)

@@ -23,6 +23,10 @@ void CommandMachine::reset() {
   StateMachine::reset();
 }
 
+void CommandMachine::ready() {
+  this->setState(Ready);
+}
+
 void CommandMachine::ready(String newRoom) {
   room = newRoom;
   this->setState(Ready);
@@ -33,10 +37,11 @@ void CommandMachine::sendRequest(String path) {
   this->setState(Connect);
 }
 
-String CommandMachine::getUrl() {
-  const String url = "/" + URLEncoderClass::encode(room) + "/" + commandPath;
-  DEBUG_MACHINE("SEND", url);
-  return url;
+void CommandMachine::get() {
+  String url = "/" + URLEncoderClass::encode(room) + "/" + commandPath;
+  unsigned long getPerf = NOW;
+  client.get(url);
+  DEBUG_MACHINE(url, String(NOW - getPerf) + "ms");
 }
 
 void CommandMachine::enter(int state, int exitState, unsigned long sinceChange) {
@@ -57,7 +62,7 @@ void CommandMachine::enter(int state, int exitState, unsigned long sinceChange) 
 
     case Connect:
       client.stop();
-      client.get(this->getUrl());
+      this->get();
       break;
   }
 }
@@ -66,9 +71,11 @@ void CommandMachine::poll(int state, unsigned long sinceChange) {
   switch (state) {
     case Connect:
       if (sinceChange > TIMEOUT) {
+        DEBUG_MACHINE("TIMEOUT");
         this->setState(Error);
       } else if (client.available()) {
         int statusCode = client.responseStatusCode();
+        DEBUG_MACHINE("STATUS", String(statusCode));
         this->setState(statusCode == SUCCESS ? Success : Error);
       }
       break;

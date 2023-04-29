@@ -17,7 +17,7 @@ class CommandMachine : public StateMachine {
     Success,
     Error,
   };
-  String stateStrings[5] = {
+  String stateStrings[4] = {
       "Ready",
       "Connect",
       "Success",
@@ -26,12 +26,13 @@ class CommandMachine : public StateMachine {
   static States states;
 
   void reset();
-
-  void poll(int state, unsigned long since) override;
-  void enter(int enterState, int exitState, unsigned long since) override;
-
+  void ready();
   void ready(String newRoom);
   void sendRequest(String path);
+
+ protected:
+  void poll(int state, unsigned long since) override;
+  void enter(int enterState, int exitState, unsigned long since) override;
 
  private:
   WiFiClient wifi;
@@ -39,7 +40,7 @@ class CommandMachine : public StateMachine {
 
   String room;
   String commandPath;
-  String getUrl();
+  void get();
 };
 
 #endif

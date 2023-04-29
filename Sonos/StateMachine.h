@@ -9,24 +9,24 @@ class StateMachine {
   StateMachine(String debugName, String* stateStrings, bool debug);
 
   virtual void reset();
-  virtual int run();
+  virtual void run();
   virtual void ready();
 
+  virtual int getState() final;
+  virtual unsigned long getSinceChange() final;
+  virtual void resetSinceChange() final;
+
+ protected:
   virtual void poll(int state, unsigned long since);
   virtual void enter(int enterState, int exitState, unsigned long since);
   virtual void exit(int exitState, int enterState);
 
-  virtual bool traceState(int state, String type);
-
   virtual bool debug() final;
   virtual String debugName() final;
   virtual String stateString(int stateIndex) final;
+  virtual bool traceState(int state, String type);
 
-  virtual int getState() final;
-  virtual int getPrevState() final;
   virtual void setState(int state) final;
-  virtual unsigned long getSinceChange() final;
-  virtual void resetSinceChange() final;
 
  private:
   bool runPoll();
@@ -41,7 +41,6 @@ class StateMachine {
   };
   RunStates runState = Polling;
 
-  int returnRunState = -1;
   int state = -1;
   int prevState = -1;
   unsigned long stateChange = 0;

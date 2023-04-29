@@ -5,11 +5,6 @@
 #include "StateMachine.h"
 #include "Utils.h"
 
-#define TOP_Y 42
-#define TEXT_3_STEP 24
-#define TEXT_2_STEP 16
-#define MARGIN 5
-
 #ifndef DEBUG_DISPLAY
 #define DEBUG_DISPLAY false
 #endif
@@ -126,8 +121,8 @@ void DisplayMachine::unsetValue(uint16_t colors[2]) {
   colors[1] = 0;
 }
 
-void DisplayMachine::setBattery(String b) {
-  this->setValue(battery, b);
+void DisplayMachine::setBattery(int b) {
+  this->setValue(battery, b < 0 ? "" : String(b) + "%");
 }
 
 void DisplayMachine::wifi(String t, String m) {
@@ -205,11 +200,11 @@ void DisplayMachine::drawPlayerControls(uint16_t c) {
   carrier.display.setTextSize(3);
   carrier.display.setCursor(MARGIN, MARGIN);
   carrier.display.print("-");
-  carrier.display.setCursor(215, MARGIN);
+  carrier.display.setCursor(CONTROLS, MARGIN);
   carrier.display.print("+");
-  carrier.display.setCursor(MARGIN, 215);
+  carrier.display.setCursor(MARGIN, CONTROLS);
   carrier.display.print("<");
-  carrier.display.setCursor(215, 215);
+  carrier.display.setCursor(CONTROLS, CONTROLS);
   carrier.display.print(">");
   this->setStale();
   carrier.display.setTextColor(foregroundColor);
@@ -221,6 +216,17 @@ void DisplayMachine::resetScreen(uint16_t bg, uint16_t fg, bool textWrap) {
   carrier.display.setTextWrap(textWrap);
   backgroundColor = bg;
   foregroundColor = fg;
+}
+
+void DisplayMachine::drawBasicScreen(String title[2], String message[2], bool drawBattery) {
+  carrier.display.setTextSize(3);
+  this->drawString(title, MARGIN, MARGIN);
+  carrier.display.setTextSize(2);
+  this->drawString(message, MARGIN, MESSAGE);
+  if (drawBattery) {
+    this->drawString(battery, MARGIN, CONTROLS + MARGIN);
+  }
+  carrier.display.setCursor(MARGIN, MESSAGE + TEXT_3_STEP);
 }
 
 void DisplayMachine::drawString(String strs[2], int x, int y) {
@@ -270,59 +276,41 @@ void DisplayMachine::redraw() {
 
   switch (this->getState()) {
     case WiFi:
-      carrier.display.setTextSize(3);
-      this->drawString(wifiTitle, MARGIN, MARGIN);
-      carrier.display.setTextSize(2);
-      this->drawString(wifiMessage, MARGIN, 50);
-      this->drawString(battery, MARGIN, 220);
-      carrier.display.setCursor(MARGIN, 50 + TEXT_3_STEP);
+      this->drawBasicScreen(wifiTitle, wifiMessage, true);
       break;
 
     case Sonos:
-      carrier.display.setTextSize(3);
-      this->drawString(sonosTitle, MARGIN, MARGIN);
-      carrier.display.setTextSize(2);
-      this->drawString(sonosMessage, MARGIN, 50);
-      this->drawString(battery, MARGIN, 220);
-      carrier.display.setCursor(MARGIN, 50 + TEXT_3_STEP);
+      this->drawBasicScreen(sonosTitle, sonosMessage, false);
       break;
 
     case Error:
-      carrier.display.setTextSize(3);
-      this->drawString(errorTitle, MARGIN, MARGIN);
-      carrier.display.setTextSize(2);
-      this->drawString(errorMessage, MARGIN, 50);
-      this->drawString(battery, MARGIN, 220);
-      carrier.display.setCursor(MARGIN, 50 + TEXT_3_STEP);
+      this->drawBasicScreen(errorTitle, errorMessage, true);
       break;
 
     case Sleep:
-      carrier.display.setTextSize(3);
-      this->drawString(sleepTitle, MARGIN, MARGIN);
-      carrier.display.setTextSize(2);
-      this->drawString(sleepMessage, MARGIN, 50);
-      this->drawString(battery, MARGIN, 220);
-      carrier.display.setCursor(MARGIN, 50 + TEXT_3_STEP);
+      this->drawBasicScreen(sleepTitle, sleepMessage, true);
       break;
 
     case Player:
       carrier.display.setTextSize(3);
-      this->drawPositionString(playButton, playButton[0].length() == 1 ? 111 : 102, MARGIN, playButton[1].length() == 1 ? 111 : 102, MARGIN);
+      this->drawPositionString(playButton,
+                               playButton[0].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN,
+                               playButton[1].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN);
 
       carrier.display.getTextBounds(action[0], 0, 0, &x1, &y1, &w, &h);
-      playAction1X = (240 - w) / 2;
+      playAction1X = (WIDTH - w) / 2;
       carrier.display.getTextBounds(action[1], 0, 0, &x1, &y1, &w, &h);
-      playAction2X = (240 - w) / 2;
+      playAction2X = (WIDTH - w) / 2;
 
-      this->drawPositionString(action, playAction1X, 215, playAction2X, 215, actionColor[0], actionColor[0] != actionColor[1]);
+      this->drawPositionString(action, playAction1X, CONTROLS, playAction2X, CONTROLS, actionColor[0], actionColor[0] != actionColor[1]);
       this->drawString(title, MARGIN, TOP_Y);
       this->drawString(artist, MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
       this->drawString(album, MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
 
       carrier.display.setTextSize(2);
-      this->drawString(repeat, 110, carrier.display.getCursorY() + TEXT_3_STEP + TEXT_2_STEP);
-      this->drawString(shuffle, 110, carrier.display.getCursorY() + TEXT_3_STEP);
-      this->drawString(volume, 110, carrier.display.getCursorY() + TEXT_3_STEP);
+      this->drawString(repeat, PLAY_STATE, carrier.display.getCursorY() + TEXT_3_STEP + TEXT_2_STEP);
+      this->drawString(shuffle, PLAY_STATE, carrier.display.getCursorY() + TEXT_3_STEP);
+      this->drawString(volume, PLAY_STATE, carrier.display.getCursorY() + TEXT_3_STEP);
       break;
   }
 }

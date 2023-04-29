@@ -27,16 +27,17 @@ class LedMachine : public StateMachine {
   void reset();
   void ready();
 
-  bool traceState(int state, String type) override;
-
-  void poll(int state, unsigned long since) override;
-  void enter(int enterState, int exitState, unsigned long since) override;
-
   void on(uint32_t aColor);
   void on(uint32_t aColor, unsigned long aDuration);
 
   void off();
   void blink(uint32_t aColor, unsigned long aDuration);
+
+ protected:
+  bool traceState(int state, String type) override;
+
+  void poll(int state, unsigned long since) override;
+  void enter(int enterState, int exitState, unsigned long since) override;
 
  private:
   const int button;

@@ -26,14 +26,10 @@ class DisplayMachine : public StateMachine {
   };
   static States states;
 
-  void poll(int state, unsigned long since) override;
-  void enter(int enterState, int exitState, unsigned long since) override;
-  void exit(int exitState, int enterState) override;
-
   void setStale();
   void printLine(String str);
 
-  void setBattery(String battery);
+  void setBattery(int battery);
 
   void wifi(String title, String message);
   void setWifi(String message);
@@ -58,6 +54,11 @@ class DisplayMachine : public StateMachine {
   void drawPlayerControls();
   void drawPlayerControls(uint16_t color);
 
+ protected:
+  void poll(int state, unsigned long since) override;
+  void enter(int enterState, int exitState, unsigned long since) override;
+  void exit(int exitState, int enterState) override;
+
  private:
   uint16_t backgroundColor;
   uint16_t foregroundColor;
@@ -65,6 +66,7 @@ class DisplayMachine : public StateMachine {
 
   bool stale = false;
 
+  void drawBasicScreen(String title[2], String message[2], bool drawBattery);
   void resetScreen(uint16_t bg, uint16_t fg, bool wrap);
   void redraw();
 
