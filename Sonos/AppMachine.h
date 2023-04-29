@@ -41,6 +41,8 @@ class AppMachine : public StateMachine {
   ButtonMachine buttonMachine;
   PlayerMachine playerMachine;
   DisplayMachine displayMachine;
+
+  String errorReason = "";
 };
 
 #endif

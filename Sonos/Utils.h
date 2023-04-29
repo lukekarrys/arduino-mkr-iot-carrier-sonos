@@ -4,6 +4,7 @@
 #define NOW millis()
 #define MINUTE 60000
 #define SLEEP 1800000
+#define LOCK 300000
 
 #define HOLD 1000
 #define TAP 40

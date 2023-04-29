@@ -83,14 +83,14 @@ void AppMachine::enter(int state, int exitState, unsigned long sinceChange) {
       wifiMachine.reset();
       ledsMachine.reset();
       playerMachine.reset();
-      displayMachine.sleep("Sleep", "Sleeping");
+      displayMachine.sleep("Sleep", "Sleeping. Tap and hold button 0 to restart.");
       break;
 
     case Error:
       wifiMachine.reset();
       ledsMachine.on(LedRed);
       playerMachine.reset();
-      displayMachine.error("Error", "Bad things");
+      displayMachine.error("Error", errorReason + ". Tap and hold button 0 to restart.");
       break;
   }
 }
@@ -106,7 +106,14 @@ void AppMachine::poll(int state, unsigned long sinceChange) {
     return;
   }
 
-  if (wifiMachine.getState() == WiFiMachine::Error || playerMachine.getState() == PlayerMachine::Error) {
+  if (wifiMachine.getState() == WiFiMachine::Error) {
+    errorReason = wifiMachine.errorReason;
+    this->setState(Error);
+    return;
+  }
+
+  if (playerMachine.getState() == PlayerMachine::Error) {
+    errorReason = playerMachine.errorReason;
     this->setState(Error);
     return;
   }

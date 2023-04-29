@@ -34,12 +34,11 @@ class WiFiMachine : public StateMachine {
   void enter(int enterState, int exitState, unsigned long since) override;
 
   int backoffCount = 0;
+  String errorReason;
 
  private:
   const char *ssid;
   const char *password;
-
-  String errorReason;
 };
 
 #endif

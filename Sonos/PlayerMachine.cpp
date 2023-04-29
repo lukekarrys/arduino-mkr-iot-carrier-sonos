@@ -227,6 +227,11 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
         sonosMachine.playing);
   }
 
+  if (this->isConnected() && state != Locked && commandMachine.getSinceChange() > LOCK) {
+    this->setState(Locked);
+    return;
+  }
+
   switch (state) {
     case Connected:
       if (sinceChange > 2000) {

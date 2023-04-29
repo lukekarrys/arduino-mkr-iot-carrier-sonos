@@ -43,13 +43,13 @@ class PlayerMachine : public StateMachine {
   void enter(int enterState, int exitState, unsigned long since) override;
   void exit(int exitState, int enterState) override;
 
+  String errorReason = "";
+
  private:
   int actionButton = -1;
   String actionMessage = "";
   char actionSuccess = 0;
   void resetAction();
-
-  String errorReason = "";
 
   SonosMachine sonosMachine;
 

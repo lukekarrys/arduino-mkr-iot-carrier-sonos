@@ -15,7 +15,7 @@ StateMachine::StateMachine(String aDebugName, String* aStateStrings)
 void StateMachine::reset() {
   state = -1;
   prevState = -1;
-  stateChange = 0;
+  this->resetSinceChange();
   DEBUG_MACHINE("RESET");
 }
 
