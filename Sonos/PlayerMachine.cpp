@@ -287,23 +287,18 @@ void PlayerMachine::handleButtons() {
   if (button4Machine.getState() == ButtonMachine::TapHold) {
     actionButton = 4;
     this->setState(this->getState() == Locked ? Ready : Locked);
-    return;
-  }
-
-  if (this->getState() == Locked) {
-    return;
-  }
-
-  if (this->button0(button0Machine.getState())) {
-    actionButton = 0;
-  } else if (this->button1(button1Machine.getState())) {
-    actionButton = 1;
-  } else if (this->button2(button2Machine.getState())) {
-    actionButton = 2;
-  } else if (this->button3(button3Machine.getState())) {
-    actionButton = 3;
-  } else if (this->button4(button4Machine.getState())) {
-    actionButton = 4;
+  } else if (this->getState() != Locked) {
+    if (this->button0(button0Machine.getState())) {
+      actionButton = 0;
+    } else if (this->button1(button1Machine.getState())) {
+      actionButton = 1;
+    } else if (this->button2(button2Machine.getState())) {
+      actionButton = 2;
+    } else if (this->button3(button3Machine.getState())) {
+      actionButton = 3;
+    } else if (this->button4(button4Machine.getState())) {
+      actionButton = 4;
+    }
   }
 }
 
