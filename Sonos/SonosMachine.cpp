@@ -69,7 +69,7 @@ void SonosMachine::nextRoom() {
 
 void SonosMachine::prevRoom() {
   roomIndex--;
-  if (roomIndex <= 0) {
+  if (roomIndex < 0) {
     roomIndex = roomSize - 1;
   }
 }

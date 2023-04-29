@@ -322,7 +322,7 @@ bool PlayerMachine::button0(int action) {
       return true;
 
     case ButtonMachine::Hold:
-      sonosMachine.nextRoom();
+      sonosMachine.prevRoom();
       this->ready();
       return true;
   }
@@ -405,7 +405,7 @@ bool PlayerMachine::button4(int action) {
       return true;
 
     case ButtonMachine::Hold:
-      sonosMachine.prevRoom();
+      sonosMachine.nextRoom();
       this->ready();
       return true;
   }
