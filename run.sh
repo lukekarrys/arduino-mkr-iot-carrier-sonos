@@ -8,10 +8,10 @@ usage() {
   exit 1;
 }
 
-while getopts ":c:s:b:p:dtx" o; do
+while getopts ":c:s:b:p:d:" o; do
   case "${o}" in
     c)
-      c=${OPTARG}
+      COMMAND=${OPTARG}
       ;;
     s)
       s=${OPTARG}
@@ -23,48 +23,38 @@ while getopts ":c:s:b:p:dtx" o; do
       p=${OPTARG}
       ;;
     d)
-      d="true"
-      ;;
-    t)
-      t="true"
-      ;;
-    x)
-      x="true"
+      d+=("$OPTARG")
       ;;
     *)
-    
-      usage
       ;;
   esac
 done
 shift $((OPTIND-1))
 
-COMMAND=${c}
+RAW_OPTS="$@"
 SKETCH=${s:-Sonos}
 FQBN=${b:-arduino:samd:mkrwifi1010}
 PORT=${p:-/dev/cu.usbmodem3101}
 
 EXTRA_FLAGS=""
-if [[ "$d" == "true" ]]; then
-  EXTRA_FLAGS="$EXTRA_FLAGS -DDEBUG"
+if [ ! "${#d[@]}" -eq 0 ]; then
+  EXTRA_FLAGS="$EXTRA_FLAGS -DDEBUG=true"
 fi
-if [[ "$t" == "true" ]]; then
-  EXTRA_FLAGS="$EXTRA_FLAGS -DTRACE"
-fi
-if [[ "$x" == "true" ]]; then
-  EXTRA_FLAGS="$EXTRA_FLAGS -DPERF"
-fi
+for i in "${d[@]}"; do
+  EXTRA_FLAGS="$EXTRA_FLAGS -DDEBUG_$i=true"
+done
 
 function compile () {
-  arduino-cli compile --fqbn $FQBN "$SKETCH" --build-property "compiler.cpp.extra_flags=$EXTRA_FLAGS"
+  echo "$@"
+  arduino-cli compile --fqbn $FQBN "$SKETCH" --build-property "compiler.cpp.extra_flags=$EXTRA_FLAGS" $RAW_OPTS
 }
 
 function upload () {
-  arduino-cli upload -p $PORT --fqbn $FQBN "$SKETCH"
+  arduino-cli upload -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
 }
 
 function monitor () {
-  arduino-cli monitor -p $PORT 
+  arduino-cli monitor -p $PORT $RAW_OPTS
 }
 
 if [[ "$COMMAND" == "compile" ]]; then
@@ -73,10 +63,10 @@ elif [[ "$COMMAND" == "upload" ]]; then
   upload
 elif [[ "$COMMAND" == "monitor" ]]; then
   monitor
-else
+elif [[ -z "$COMMAND" ]]; then
   compile
   upload
-  if [[ $EXTRA_FLAGS == *" -D"* ]]; then
-    monitor
-  fi
+  monitor
+else
+  arduino-cli "$COMMAND" -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
 fi
