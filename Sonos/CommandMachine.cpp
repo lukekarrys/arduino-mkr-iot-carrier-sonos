@@ -17,10 +17,14 @@ CommandMachine::CommandMachine(const char *aServer, uint16_t aPort)
 }
 
 void CommandMachine::reset() {
+  StateMachine::reset();
   room = "";
   commandPath = "";
+  this->resetClient();
+}
+
+void CommandMachine::resetClient() {
   client.stop();
-  StateMachine::reset();
 }
 
 void CommandMachine::ready() {
@@ -47,21 +51,21 @@ void CommandMachine::get() {
 void CommandMachine::enter(int state, int exitState, unsigned long sinceChange) {
   switch (state) {
     case Ready:
-      client.stop();
+      this->resetClient();
       break;
 
     case Success:
-      client.stop();
+      this->resetClient();
       this->setState(Ready);
       break;
 
     case Error:
-      client.stop();
+      this->resetClient();
       this->setState(Ready);
       break;
 
     case Connect:
-      client.stop();
+      this->resetClient();
       this->get();
       break;
   }

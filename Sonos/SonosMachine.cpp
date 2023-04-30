@@ -39,6 +39,10 @@ void SonosMachine::reset() {
     rooms[i] = "";
   }
 
+  this->resetClient();
+}
+
+void SonosMachine::resetClient() {
   client.stop();
 }
 
@@ -56,8 +60,8 @@ void SonosMachine::ready() {
 }
 
 void SonosMachine::backoff(String reason) {
+  DEBUG_MACHINE("BACKOFF", reason);
   errorReason = reason;
-  DEBUG_MACHINE("BACKOFF", errorReason);
   this->setState(Backoff);
 }
 
@@ -92,21 +96,21 @@ void SonosMachine::enter(int state, int exitState, unsigned long sinceChange) {
   switch (state) {
     case Error:
       backoffCount = 0;
-      client.stop();
+      this->resetClient();
       break;
 
     case Backoff:
       backoffCount += 1;
-      client.stop();
+      this->resetClient();
       break;
 
     case Zones:
-      client.stop();
+      this->resetClient();
       this->get("/zones/names");
       break;
 
     case Connect:
-      client.stop();
+      this->resetClient();
       this->get("/" + URLEncoderClass::encode(this->getRoom()) + "/events");
       break;
 
@@ -126,15 +130,16 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
     case Zones:
       if (sinceChange > TIMEOUT) {
         this->backoff("Timeout connecting to /zones");
-      } else if (client.available()) {
+      } else if (client.connected() && client.available()) {
         if (client.endOfHeadersReached()) {
           this->setRooms(client.responseBody());
         } else {
           int statusCode = client.responseStatusCode();
+          DEBUG_MACHINE("/zones", String(statusCode));
           if (statusCode == SUCCESS) {
             client.skipResponseHeaders();
           } else {
-            this->backoff("Status code " + statusCode);
+            this->backoff("Status code " + String(statusCode));
           }
         }
       }
@@ -143,7 +148,7 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
     case Connect:
       if (sinceChange > TIMEOUT) {
         this->backoff("Timeout connecting to /events");
-      } else if (client.available()) {
+      } else if (client.connected() && client.available()) {
         int statusCode = client.responseStatusCode();
         if (statusCode == SUCCESS) {
           this->setState(Connected);
@@ -154,16 +159,16 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
       break;
 
     case Backoff:
-      if (backoffCount >= 5) {
+      if (backoffCount >= 4) {
         this->setState(Error);
       } else if (sinceChange > BACKOFF(backoffCount)) {
-        this->setState(Connect);
+        this->ready();
       }
       break;
 
     case Connected:
       if (!client.connected()) {
-        this->setState(Connect);
+        this->ready();
       } else if (client.available()) {
         const char c = client.read();
         if (c == '\n') {
@@ -223,7 +228,7 @@ void SonosMachine::setRooms(String rawResponse) {
 
   DEBUG_MACHINE("CURRENT_ROOM", this->getRoom());
 
-  this->setState(Connect);
+  this->ready();
 }
 
 bool SonosMachine::setSonos(String rawResponse) {

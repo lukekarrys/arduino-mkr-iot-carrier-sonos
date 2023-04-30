@@ -24,7 +24,7 @@ class StateMachine {
   virtual bool debug() final;
   virtual String debugName() final;
   virtual String stateString(int stateIndex) final;
-  virtual bool traceState(int state, String type);
+  virtual bool traceState(int state);
 
   virtual void setState(int state) final;
 

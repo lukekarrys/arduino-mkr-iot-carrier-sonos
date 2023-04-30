@@ -19,8 +19,8 @@ LedMachine::LedMachine(int aButton)
       button(aButton),
       count(1) {}
 
-bool LedMachine::traceState(int state, String type) {
-  return (state == BlinkOn || state == BlinkOff) || StateMachine::traceState(state, type);
+bool LedMachine::traceState(int state) {
+  return state == BlinkOn || state == BlinkOff;
 }
 
 void LedMachine::reset() {

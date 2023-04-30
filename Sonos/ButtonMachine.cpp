@@ -16,8 +16,8 @@ ButtonMachine::ButtonMachine(touchButtons aButton)
     : StateMachine("BUTTON_" + String(aButton), stateStrings, DEBUG_BUTTON),
       button(aButton) {}
 
-bool ButtonMachine::traceState(int state, String type) {
-  return (state != Tap && state != Hold && state != TapHold && state != DoubleTap) || StateMachine::traceState(state, type);
+bool ButtonMachine::traceState(int state) {
+  return state != Tap && state != Hold && state != TapHold && state != DoubleTap;
 }
 
 void ButtonMachine::reset() {
@@ -117,10 +117,10 @@ void ButtonMachine::poll(int state, unsigned long sinceChange) {
   if (touch && !prevTouch) {
     prevTouch = 1;
     prevDown = NOW;
-    DEBUG_MACHINE("TOUCH_DOWN", switchState, "");
+    TRACE_MACHINE("TOUCH_DOWN", switchState, "");
   } else if (!touch && prevTouch) {
     prevTouch = 0;
     prevUp = NOW;
-    DEBUG_MACHINE("TOUCH_UP", switchState, "");
+    TRACE_MACHINE("TOUCH_UP", switchState, "");
   }
 }

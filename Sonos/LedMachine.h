@@ -34,7 +34,7 @@ class LedMachine : public StateMachine {
   void blink(uint32_t aColor, unsigned long aDuration);
 
  protected:
-  bool traceState(int state, String type) override;
+  bool traceState(int state) override;
 
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;

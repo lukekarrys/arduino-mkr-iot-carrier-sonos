@@ -42,7 +42,8 @@ class ButtonMachine : public StateMachine {
   void ready();
 
  protected:
-  bool traceState(int state, String type) override;
+  bool traceState(int state) override;
+
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;
 

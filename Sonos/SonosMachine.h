@@ -62,6 +62,7 @@ class SonosMachine : public StateMachine {
   WiFiClient wifi;
   HttpClient client;
   void get(String url);
+  void resetClient();
 
   int backoffCount = 0;
   void backoff(String reason);

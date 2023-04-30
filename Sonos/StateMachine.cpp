@@ -32,8 +32,8 @@ bool StateMachine::debug() {
 #endif
 }
 
-bool StateMachine::traceState(int state, String type) {
-  return type != "ENTER";
+bool StateMachine::traceState(int state) {
+  return false;
 }
 
 String StateMachine::debugName() {
@@ -65,7 +65,7 @@ void StateMachine::nextState(int inititalState) {
   runState = Polling;
   this->resetSinceChange();
   prevState = inititalState;
-  DEBUG_MACHINE("NEXT_STATE", prevState, "");
+  TRACE_MACHINE("NEXT_STATE", prevState, "");
 }
 
 void StateMachine::run() {
@@ -92,7 +92,7 @@ bool StateMachine::runExit() {
     return (false);
   }
 
-  DEBUG_MACHINE("EXIT", prevState, "");
+  TRACE_MACHINE("EXIT", prevState, "");
 
   this->exit(prevState, state);
 
@@ -106,15 +106,15 @@ bool StateMachine::runEnter(int initialState) {
     return (false);
   }
 
-  DEBUG_MACHINE("RUN_STATE", runState == 0 ? "Polling" : runState == 1 ? "Entered"
+  TRACE_MACHINE("RUN_STATE", runState == 0 ? "Polling" : runState == 1 ? "Entered"
                                                                        : "Exited");
   DEBUG_MACHINE("ENTER", state, String(this->getSinceChange()) + "ms");
 
   this->enter(state, prevState, this->getSinceChange());
 
   if (initialState != -1 && initialState != state) {
-    DEBUG_MACHINE("ENTER_EXIT_INITIAL", initialState, "");
-    DEBUG_MACHINE("ENTER_EXIT_STATE", state, "");
+    TRACE_MACHINE("ENTER_EXIT_INITIAL", initialState, "");
+    TRACE_MACHINE("ENTER_EXIT_STATE", state, "");
     this->nextState(initialState);
   } else {
     runState = Entered;

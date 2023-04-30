@@ -41,6 +41,7 @@ class CommandMachine : public StateMachine {
   String room;
   String commandPath;
   void get();
+  void resetClient();
 };
 
 #endif
