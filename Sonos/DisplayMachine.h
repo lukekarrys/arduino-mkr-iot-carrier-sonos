@@ -29,7 +29,9 @@ class DisplayMachine : public StateMachine {
   void setStale();
   void printLine(String str);
 
-  void setBattery(int battery);
+  void setBattery(int v);
+  void setTemperature(int v);
+  void setHumidity(int v);
 
   void wifi(String title, String message);
   void setWifi(String message);
@@ -81,6 +83,8 @@ class DisplayMachine : public StateMachine {
   void unsetValue(uint16_t colors[2]);
 
   String battery[2] = {"", ""};
+  String temperature[2] = {"", ""};
+  String humidity[2] = {"", ""};
 
   String wifiTitle[2] = {"", ""};
   String wifiMessage[2] = {"", ""};

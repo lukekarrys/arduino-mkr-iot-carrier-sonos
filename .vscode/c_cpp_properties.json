@@ -1,0 +1,66 @@
+{
+  "env": {
+    "arduinoFolder": "${env:HOME}/Library/Arduino15/packages/arduino/hardware/samd/1.8.13",
+    "arduinoTools": "${env:HOME}/Library/Arduino15/packages/arduino/tools"
+  },
+  "configurations": [
+    {
+      "name": "Mac",
+      "includePath": [
+        "${workspaceFolder}/Sonos/**",
+        "${arduinoFolder}/**",
+        "${arduinoFolder}/libraries/**",
+        "${arduinoFolder}/cores/arduino/**",
+        "${arduinoFolder}/variants/mkrwan1300/**",
+        "${arduinoTools}/**",
+        "${arduinoTools}/arm-none-eabi-gcc/7-2017q4/**",
+        "${arduinoTools}/CMSIS/4.5.0/CMSIS/Include/**",
+        "${arduinoTools}/CMSIS-Atmel/1.2.0/CMSIS/Device/ATMEL/**",
+        "${arduinoTools}/CMSIS-Atmel/1.2.0/CMSIS/Device/ATMEL/samd21/**",
+        "${workspaceFolder}/libraries/Adafruit_BusIO/**",
+        "${workspaceFolder}/libraries/Adafruit_DotStar/**",
+        "${workspaceFolder}/libraries/Adafruit_GFX_Library/**",
+        "${workspaceFolder}/libraries/Adafruit_seesaw_Library/**",
+        "${workspaceFolder}/libraries/Adafruit_ST7735_and_ST7789_Library/**",
+        "${workspaceFolder}/libraries/Arduino_APDS9960/src/**",
+        "${workspaceFolder}/libraries/Arduino_BQ24195/src/**",
+        "${workspaceFolder}/libraries/Arduino_HTS221/src/**",
+        "${workspaceFolder}/libraries/Arduino_LPS22HB/src/**",
+        "${workspaceFolder}/libraries/Arduino_LSM6DS3/src/**",
+        "${workspaceFolder}/libraries/Arduino_LSM6DSOX/src/**",
+        "${workspaceFolder}/libraries/Arduino_MCHPTouch/src/**",
+        "${workspaceFolder}/libraries/Arduino_MKRIoTCarrier/src/**",
+        "${workspaceFolder}/libraries/ArduinoHttpClient/src/**",
+        "${workspaceFolder}/libraries/ArduinoJson/src/**",
+        "${workspaceFolder}/libraries/SD/src/**",
+        "${workspaceFolder}/libraries/TFT_eSPI/**",
+        "${workspaceFolder}/libraries/WiFiNINA/src/**"
+      ],
+      "forcedInclude": [
+        "${arduinoFolder}/cores/arduino/Arduino.h"
+      ],
+      "defines": [
+        "__CC_ARM",
+        "F_CPU=48000000L",
+        "ARDUINO=10607",
+        "ARDUINO_SAMD_MKRWAN1300",
+        "ARDUINO_ARCH_SAMD",
+        "USE_ARDUINO_MKR_PIN_LAYOUT",
+        "__SAMD21G18A__",
+        "USB_VID=0x2341",
+        "USB_PID=0x8053",
+        "USBCON",
+        "USE_BQ24195L_PMIC",
+        "VERY_LOW_POWER"
+      ],
+      "macFrameworkPath": [
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
+      ],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "macos-clang-arm64"
+    }
+  ],
+  "version": 4
+}

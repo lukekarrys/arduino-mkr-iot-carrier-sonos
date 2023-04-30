@@ -6,7 +6,7 @@
 #define SLEEP 1800000
 #define LOCK 300000
 #define WIFI_CHECK 10000
-#define BATTERY_CHECK 60000
+#define SENSOR_CHECK 60000
 
 #define HOLD 1000
 #define TAP 40

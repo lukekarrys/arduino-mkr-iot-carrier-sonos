@@ -1,2 +1,4 @@
 library:
   enable_unsafe_install: true
+directories:
+  user: .

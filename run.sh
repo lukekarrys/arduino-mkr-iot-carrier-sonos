@@ -4,17 +4,16 @@ set -o errexit
 set -o pipefail
 
 usage() {
-  echo "Usage: $0 [-s SketchName] [-c COMMAND] [-b BOARD] [-p SERIAL_PORT]" 1>&2;
+  echo "Usage: $0 [-c COMMAND] [-b BOARD] [-p SERIAL_PORT]" 1>&2;
   exit 1;
 }
 
-while getopts ":c:s:b:p:d:" o; do
+SKETCH="SONOS"
+
+while getopts ":c:b:p:d:" o; do
   case "${o}" in
     c)
       COMMAND=${OPTARG}
-      ;;
-    s)
-      s=${OPTARG}
       ;;
     b)
       b=${OPTARG}
@@ -32,7 +31,6 @@ done
 shift $((OPTIND-1))
 
 RAW_OPTS="$@"
-SKETCH=${s:-Sonos}
 FQBN=${b:-arduino:samd:mkrwifi1010}
 PORT=${p:-/dev/cu.usbmodem3101}
 
@@ -49,6 +47,13 @@ function compile () {
   arduino-cli compile --fqbn $FQBN "$SKETCH" --build-property "compiler.cpp.extra_flags=$EXTRA_FLAGS" $RAW_OPTS
 }
 
+function install () {
+  arduino-cli lib install Arduino_MKRIoTCarrier
+  arduino-cli lib install ArduinoHttpClient
+  arduino-cli lib install ArduinoJson
+  arduino-cli lib install --git-url https://github.com/lukekarrys/WiFiNINA.git
+}
+
 function upload () {
   arduino-cli upload -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
 }
@@ -59,6 +64,8 @@ function monitor () {
 
 if [[ "$COMMAND" == "compile" ]]; then
   compile
+elif [[ "$COMMAND" == "install" ]]; then
+  install
 elif [[ "$COMMAND" == "upload" ]]; then
   upload
 elif [[ "$COMMAND" == "monitor" ]]; then
@@ -66,7 +73,9 @@ elif [[ "$COMMAND" == "monitor" ]]; then
 elif [[ -z "$COMMAND" ]]; then
   compile
   upload
-  monitor
+  if [[ $EXTRA_FLAGS ]]; then
+    monitor
+  fi
 else
   arduino-cli "$COMMAND" -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
 fi

@@ -1,5 +1,5 @@
-#ifndef BATTERY_MACHINE_H
-#define BATTERY_MACHINE_H
+#ifndef SENSOR_MACHINE_H
+#define SENSOR_MACHINE_H
 
 #include <Arduino.h>
 
@@ -12,9 +12,9 @@
 
 #define BATTERY_CAPACITY 1.800
 
-class BatteryMachine : public StateMachine {
+class SensorMachine : public StateMachine {
  public:
-  BatteryMachine();
+  SensorMachine();
 
   enum States {
     Off,
@@ -32,14 +32,18 @@ class BatteryMachine : public StateMachine {
   void reset();
   void ready();
 
-  int batteryLevel;
+  int battery;
+  int temperature;
+  int humidity;
 
  protected:
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;
 
  private:
-  void setBatteryLevel();
+  void setBattery();
+  void setTemperature();
+  void setHumidity();
 
   const int maxSourceVoltage = (BATTERY_EMPTY * (R1_VALUE + R2_VALUE)) / R2_VALUE;
   const int R1 = R1_VALUE;

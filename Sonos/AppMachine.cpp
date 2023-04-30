@@ -1,12 +1,12 @@
 
 #include "AppMachine.h"
 
-#include "BatteryMachine.h"
 #include "ButtonMachine.h"
 #include "Carrier.h"
 #include "DisplayMachine.h"
 #include "LedMachine.h"
 #include "PlayerMachine.h"
+#include "SensorMachine.h"
 #include "StateMachine.h"
 #include "Utils.h"
 #include "WiFiMachine.h"
@@ -38,12 +38,18 @@ AppMachine::AppMachine(const char *ssid, const char *password, const char *serve
 }
 
 void AppMachine::ready() {
-  batteryMachine.ready();
+  sensorMachine.ready();
   buttonMachine.ready();
   ledsMachine.ready();
   displayMachine.ready();
-  displayMachine.setBattery(batteryMachine.batteryLevel);
+  this->drawSensors();
   this->setState(WiFi);
+}
+
+void AppMachine::drawSensors() {
+  displayMachine.setBattery(sensorMachine.battery);
+  displayMachine.setHumidity(sensorMachine.humidity);
+  displayMachine.setTemperature(sensorMachine.temperature);
 }
 
 bool AppMachine::isConnected() {
@@ -53,7 +59,7 @@ bool AppMachine::isConnected() {
 
 void AppMachine::reset() {
   StateMachine::reset();
-  batteryMachine.reset();
+  sensorMachine.reset();
   wifiMachine.reset();
   ledsMachine.reset();
   buttonMachine.reset();
@@ -63,7 +69,7 @@ void AppMachine::reset() {
 
 void AppMachine::run() {
   StateMachine::run();
-  batteryMachine.run();
+  sensorMachine.run();
   wifiMachine.run();
   ledsMachine.run();
   buttonMachine.run();
@@ -75,19 +81,19 @@ void AppMachine::enter(int state, int exitState, unsigned long sinceChange) {
   switch (state) {
     case WiFi:
       wifiMachine.ready();
-      batteryMachine.ready();
+      sensorMachine.ready();
       ledsMachine.blink(LedBlue, FAST_BLINK);
       playerMachine.reset();
       displayMachine.wifi("WiFi:", "Connecting");
       break;
 
     case Player:
-      batteryMachine.reset();
+      sensorMachine.reset();
       playerMachine.ready();
       break;
 
     case Sleep:
-      batteryMachine.ready();
+      sensorMachine.ready();
       wifiMachine.reset();
       ledsMachine.reset();
       playerMachine.reset();
@@ -95,7 +101,7 @@ void AppMachine::enter(int state, int exitState, unsigned long sinceChange) {
       break;
 
     case Error:
-      batteryMachine.ready();
+      sensorMachine.ready();
       wifiMachine.reset();
       ledsMachine.on(LedRed);
       playerMachine.reset();
@@ -127,8 +133,8 @@ void AppMachine::poll(int state, unsigned long sinceChange) {
     return;
   }
 
-  if (batteryMachine.getState() == BatteryMachine::Update) {
-    displayMachine.setBattery(batteryMachine.batteryLevel);
+  if (sensorMachine.getState() == SensorMachine::Update) {
+    this->drawSensors();
   }
 
   switch (state) {

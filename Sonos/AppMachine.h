@@ -1,11 +1,11 @@
 #ifndef APP_MACHINE_H
 #define APP_MACHINE_H
 
-#include "BatteryMachine.h"
 #include "ButtonMachine.h"
 #include "DisplayMachine.h"
 #include "LedMachine.h"
 #include "PlayerMachine.h"
+#include "SensorMachine.h"
 #include "StateMachine.h"
 #include "WiFiMachine.h"
 
@@ -38,12 +38,14 @@ class AppMachine : public StateMachine {
   void enter(int enterState, int exitState, unsigned long since) override;
 
  private:
+  void drawSensors();
+
   LedMachine ledsMachine;
   WiFiMachine wifiMachine;
   ButtonMachine buttonMachine;
   PlayerMachine playerMachine;
   DisplayMachine displayMachine;
-  BatteryMachine batteryMachine;
+  SensorMachine sensorMachine;
 
   String errorReason = "";
 };

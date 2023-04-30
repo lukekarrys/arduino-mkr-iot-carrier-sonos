@@ -48,6 +48,8 @@ void DisplayMachine::exit(int state, int enterState) {
   }
 
   this->unsetValue(battery);
+  this->unsetValue(humidity);
+  this->unsetValue(temperature);
 }
 
 void DisplayMachine::enter(int state, int exitState, unsigned long sinceChange) {
@@ -121,8 +123,16 @@ void DisplayMachine::unsetValue(uint16_t colors[2]) {
   colors[1] = 0;
 }
 
-void DisplayMachine::setBattery(int b) {
-  this->setValue(battery, b < 0 ? "" : String(b) + "%");
+void DisplayMachine::setBattery(int v) {
+  this->setValue(battery, v < 0 ? "" : "Bat:" + String(v) + "%");
+}
+
+void DisplayMachine::setHumidity(int v) {
+  this->setValue(humidity, "Hum:" + String(v) + "%");
+}
+
+void DisplayMachine::setTemperature(int v) {
+  this->setValue(temperature, "Temp:" + String(v) + "F");
 }
 
 void DisplayMachine::wifi(String t, String m) {
@@ -218,13 +228,15 @@ void DisplayMachine::resetScreen(uint16_t bg, uint16_t fg, bool textWrap) {
   foregroundColor = fg;
 }
 
-void DisplayMachine::drawBasicScreen(String title[2], String message[2], bool drawBattery) {
+void DisplayMachine::drawBasicScreen(String title[2], String message[2], bool drawSensors) {
   carrier.display.setTextSize(3);
   this->drawString(title, MARGIN, MARGIN);
   carrier.display.setTextSize(2);
   this->drawString(message, MARGIN, MESSAGE);
-  if (drawBattery) {
+  if (drawSensors) {
     this->drawString(battery, MARGIN, CONTROLS + MARGIN);
+    this->drawString(humidity, MARGIN, carrier.display.getCursorY() - TEXT_3_STEP);
+    this->drawString(temperature, MARGIN, carrier.display.getCursorY() - TEXT_3_STEP);
   }
   carrier.display.setCursor(MARGIN, MESSAGE + TEXT_3_STEP);
 }
