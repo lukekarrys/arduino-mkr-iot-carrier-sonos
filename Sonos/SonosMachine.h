@@ -41,7 +41,7 @@ class SonosMachine : public StateMachine {
   void nextRoom();
   void prevRoom();
   String getRoom();
-  String rooms[10] = {};
+  String rooms[7] = {};
 
   int volume;
   bool mute;

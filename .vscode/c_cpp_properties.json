@@ -51,7 +51,8 @@
         "USB_PID=0x8053",
         "USBCON",
         "USE_BQ24195L_PMIC",
-        "VERY_LOW_POWER"
+        "VERY_LOW_POWER",
+        "ADC_BATTERY"
       ],
       "macFrameworkPath": [
         "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"

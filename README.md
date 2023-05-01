@@ -33,7 +33,7 @@ The device will go to sleep after `SLEEP`ms (see [Utils.h](./Sonos/Utils.h)).
 
 You can also trigger sleep/wake manually by a `TapHold` action on `Button0`.
 
-## Player Button Reference
+## Player Buttons
 
 ### Button 0
 
@@ -64,3 +64,23 @@ You can also trigger sleep/wake manually by a `TapHold` action on `Button0`.
 - **Tap**: Next Track
 - **Double Tap**: N/A
 - **Hold**: Next Room
+
+## Pics
+
+### Sleep
+
+![](./docs/sleep.jpeg)
+
+### WiFi
+
+![](./docs/wifi.jpeg)
+
+### Sonos Rooms
+
+![](./docs/rooms.jpeg)
+
+### Player
+
+![](./docs/player.jpeg)
+
+

@@ -8,7 +8,7 @@ usage() {
   exit 1;
 }
 
-SKETCH="SONOS"
+SKETCH="Sonos"
 
 while getopts ":c:b:p:d:" o; do
   case "${o}" in
