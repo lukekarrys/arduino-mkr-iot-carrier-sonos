@@ -6,7 +6,7 @@
 #include <URLEncoder.h>
 #include <WiFiNINA.h>
 
-#include "Utils.h"
+#include "Consts.h"
 
 #ifndef DEBUG_SONOS
 #define DEBUG_SONOS false

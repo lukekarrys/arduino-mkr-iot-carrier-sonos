@@ -5,6 +5,7 @@
 #include <ArduinoHttpClient.h>
 #include <WiFiNINA.h>
 
+#include "Enum.h"
 #include "StateMachine.h"
 
 class SonosMachine : public StateMachine {
@@ -12,23 +13,13 @@ class SonosMachine : public StateMachine {
   SonosMachine(const char *server, uint16_t port);
   SonosMachine(const char *server, uint16_t port, String initialRoom);
 
-  enum States {
-    Error,
-    Backoff,
-    Zones,
-    Connect,
-    Connected,
-    Update,
-  };
-  String stateStrings[6] = {
-      "Error",
-      "Backoff",
-      "Zones",
-      "Connect",
-      "Connected",
-      "Update",
-  };
-  static States states;
+  ENUM_STATES(
+      Error,
+      Backoff,
+      Zones,
+      Connect,
+      Connected,
+      Update, );
 
   void reset();
   void ready();

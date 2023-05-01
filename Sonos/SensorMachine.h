@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+#include "Enum.h"
 #include "StateMachine.h"
 
 #define R1_VALUE 330000
@@ -16,18 +17,10 @@ class SensorMachine : public StateMachine {
  public:
   SensorMachine();
 
-  enum States {
-    Off,
-    On,
-    Update,
-  };
-  String stateStrings[3] = {
-      "Off",
-      "On",
-      "Update",
-  };
-
-  static States states;
+  ENUM_STATES(
+      Off,
+      On,
+      Update, );
 
   void reset();
   void ready();

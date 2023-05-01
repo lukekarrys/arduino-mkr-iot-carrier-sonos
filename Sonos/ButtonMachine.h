@@ -2,47 +2,34 @@
 #define BUTTON_MACHINE_H
 
 #include "Carrier.h"
+#include "Debug.h"
+#include "Enum.h"
 #include "StateMachine.h"
 
 class ButtonMachine : public StateMachine {
  public:
   ButtonMachine(touchButtons button);
 
-  enum States {
-    Init,
-    Up,
-    Down,
-    Tapped,
-    DoubleTapped,
-    Discard,
-    PostHold,
-    // action states
-    Tap,
-    Hold,
-    TapHold,
-    DoubleTap,
-  };
-  String stateStrings[11] = {
-      "Init",
-      "Up",
-      "Down",
-      "Tapped",
-      "DoubleTapped",
-      "Discard",
-      "PostHold",
-      // action states
-      "Tap",
-      "Hold",
-      "TapHold",
-      "DoubleTap",
-  };
-  static States states;
+  ENUM_STATES(
+      Init,
+      Up,
+      Down,
+      Tapped,
+      DoubleTapped,
+      Discard,
+      PostHold,
+      Tap,
+      Hold,
+      TapHold,
+      DoubleTap, );
 
   void reset();
   void ready();
 
  protected:
+#ifdef DEBUG_OR_TRACE
   bool traceState(int state) override;
+#endif
 
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;

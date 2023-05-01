@@ -5,8 +5,8 @@
 #include <BQ24195.h>
 
 #include "Carrier.h"
+#include "Consts.h"
 #include "StateMachine.h"
-#include "Utils.h"
 
 #ifndef DEBUG_SENSOR
 #define DEBUG_SENSOR false

@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#include "Debug.h"
+
 class StateMachine {
  public:
   StateMachine(String debugName, String* stateStrings);
@@ -21,10 +23,12 @@ class StateMachine {
   virtual void enter(int enterState, int exitState, unsigned long since);
   virtual void exit(int exitState, int enterState);
 
+#ifdef DEBUG_OR_TRACE
   virtual bool debug() final;
   virtual String debugName() final;
   virtual String stateString(int stateIndex) final;
   virtual bool traceState(int state);
+#endif
 
   virtual void setState(int state) final;
 

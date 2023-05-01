@@ -3,6 +3,7 @@
 
 #include "ButtonMachine.h"
 #include "DisplayMachine.h"
+#include "Enum.h"
 #include "LedMachine.h"
 #include "PlayerMachine.h"
 #include "SensorMachine.h"
@@ -14,19 +15,7 @@ class AppMachine : public StateMachine {
   AppMachine(const char *ssid, const char *password, const char *server, uint16_t port);
   AppMachine(const char *ssid, const char *password, const char *server, uint16_t port, String initialRoom);
 
-  enum States {
-    WiFi,
-    Player,
-    Sleep,
-    Error,
-  };
-  String stateStrings[4] = {
-      "WiFi",
-      "Player",
-      "Sleep",
-      "Error",
-  };
-  static States states;
+  ENUM_STATES(WiFi, Player, Sleep, Error);
 
   bool isConnected();
   void reset();

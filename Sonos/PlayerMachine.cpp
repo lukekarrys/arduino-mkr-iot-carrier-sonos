@@ -1,7 +1,7 @@
 #include "PlayerMachine.h"
 
 #include "Carrier.h"
-#include "Utils.h"
+#include "Consts.h"
 
 #define ROOMS_WAIT 2000
 #define RESULT_WAIT 1000
@@ -317,20 +317,23 @@ bool PlayerMachine::button0(int action) {
     case ButtonMachine::Tap:
       commandMachine.sendRequest("previous");
       actionMessage = "Prev";
-      return true;
+      break;
 
     case ButtonMachine::DoubleTap:
       commandMachine.sendRequest("trackseek/1");
       actionMessage = "Start";
-      return true;
+      break;
 
     case ButtonMachine::Hold:
       sonosMachine.prevRoom();
       this->ready();
-      return true;
+      break;
+
+    default:
+      return false;
   }
 
-  return false;
+  return true;
 }
 
 bool PlayerMachine::button1(int action) {
@@ -338,20 +341,23 @@ bool PlayerMachine::button1(int action) {
     case ButtonMachine::Tap:
       commandMachine.sendRequest("volume/-1");
       actionMessage = "Vol -1";
-      return true;
+      break;
 
     case ButtonMachine::DoubleTap:
       commandMachine.sendRequest("volume/-5");
       actionMessage = "Vol -5";
-      return true;
+      break;
 
     case ButtonMachine::Hold:
       commandMachine.sendRequest("togglemute");
       actionMessage = sonosMachine.mute ? "Unmute" : "Mute";
-      return true;
+      break;
+
+    default:
+      return false;
   }
 
-  return false;
+  return true;
 }
 
 bool PlayerMachine::button2(int action) {
@@ -360,21 +366,24 @@ bool PlayerMachine::button2(int action) {
     case ButtonMachine::Tap:
       commandMachine.sendRequest("playpause");
       actionMessage = sonosMachine.playing ? "Pause" : "Play";
-      return true;
+      break;
 
     case ButtonMachine::DoubleTap:
       commandMachine.sendRequest("shuffle/toggle");
       actionMessage = sonosMachine.shuffle ? "Shuf Off" : "Shuf On";
-      return true;
+      break;
 
     case ButtonMachine::Hold:
       commandMachine.sendRequest("repeat/toggle");
       actionMessage = "Rep " + String(repeat == "all" ? "One" : repeat == "one" ? "None"
                                                                                 : "All");
-      return true;
+      break;
+
+    default:
+      return false;
   }
 
-  return false;
+  return true;
 }
 
 bool PlayerMachine::button3(int action) {
@@ -382,20 +391,23 @@ bool PlayerMachine::button3(int action) {
     case ButtonMachine::Tap:
       commandMachine.sendRequest("volume/+1");
       actionMessage = "Vol +1";
-      return true;
+      break;
 
     case ButtonMachine::DoubleTap:
       commandMachine.sendRequest("volume/+5");
       actionMessage = "Vol +5";
-      return true;
+      break;
 
     case ButtonMachine::Hold:
       commandMachine.sendRequest("togglemute");
       actionMessage = sonosMachine.mute ? "Unmute" : "Mute";
-      return true;
+      break;
+
+    default:
+      return false;
   }
 
-  return false;
+  return true;
 }
 
 bool PlayerMachine::button4(int action) {
@@ -405,13 +417,16 @@ bool PlayerMachine::button4(int action) {
     case ButtonMachine::Tap:
       commandMachine.sendRequest("next");
       actionMessage = "Next";
-      return true;
+      break;
 
     case ButtonMachine::Hold:
       sonosMachine.nextRoom();
       this->ready();
-      return true;
+      break;
+
+    default:
+      return false;
   }
 
-  return false;
+  return true;
 }

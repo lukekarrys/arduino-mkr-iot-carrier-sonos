@@ -29,9 +29,15 @@
 
 ## Sleep/Wake
 
-The device will go to sleep after `SLEEP`ms (see [Utils.h](./Sonos/Utils.h)).
+The device will go to sleep after `SLEEP`ms (see [Utils.h](./Sonos/Utils.h)) if the player state has not changed.
 
-You can also trigger sleep/wake manually by a `TapHold` action on `Button0`.
+You can also trigger sleep/wake manually by a `Tap Hold` action on `Button 0`.
+
+## Button Lock
+
+The player buttons will lock (indicated by the controls turning red) after `LOCK`ms (see [Utils.h](./Sonos/Utils.h)) if no commands have been initiated from the player buttons.
+
+You can also trigger lock/unlock manually by a `Tap Hold` action on `Button 4`.
 
 ## Player Buttons
 
@@ -62,7 +68,7 @@ You can also trigger sleep/wake manually by a `TapHold` action on `Button0`.
 ### Button 4
 
 - **Tap**: Next Track
-- **Double Tap**: N/A
+- **Double Tap**:
 - **Hold**: Next Room
 
 ## Pics

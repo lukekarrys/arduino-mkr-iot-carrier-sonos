@@ -5,25 +5,18 @@
 #include <ArduinoHttpClient.h>
 #include <WiFiNINA.h>
 
+#include "Enum.h"
 #include "StateMachine.h"
 
 class CommandMachine : public StateMachine {
  public:
   CommandMachine(const char *aServer, uint16_t aPort);
 
-  enum States {
-    Ready,
-    Connect,
-    Success,
-    Error,
-  };
-  String stateStrings[4] = {
-      "Ready",
-      "Connect",
-      "Success",
-      "Error",
-  };
-  static States states;
+  ENUM_STATES(
+      Ready,
+      Connect,
+      Success,
+      Error, );
 
   void reset();
   void ready();

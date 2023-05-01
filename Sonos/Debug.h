@@ -1,40 +1,6 @@
 #ifndef DEBUG_UTILS_H
 #define DEBUG_UTILS_H
 
-#define NOW millis()
-#define MINUTE 60000
-#define SLEEP 1800000
-#define LOCK 300000
-#define WIFI_CHECK 10000
-#define SENSOR_CHECK 60000
-
-#define HOLD 1000
-#define TAP 40
-#define DOUBLE_TAP 100
-
-#define TIMEOUT 1000
-#define BACKOFF(count) (1000 * pow(2, count))
-
-#define SUCCESS 200
-
-#define HAPPY_BEEP 800
-#define SAD_BEEP 400
-
-#define FAST_BLINK 100
-
-#define TOP_Y 42
-#define TEXT_3_STEP 24
-#define TEXT_3_CHAR 9
-#define TEXT_2_STEP 16
-#define MARGIN 5
-
-#define WIDTH 240
-#define CENTER 120
-
-#define MESSAGE 50
-#define CONTROLS 215
-#define PLAY_STATE 110
-
 #ifdef DEBUG
 #define DEBUG_OR_TRACE
 #define PRINT(...) Serial.print(__VA_ARGS__)
@@ -53,6 +19,8 @@
 #define TRACELN(...)
 #endif
 
+#define GET_MACHINE_MACRO(_1, _2, _3, NAME, ...) NAME
+
 #ifndef DEBUG_OR_TRACE
 
 #define DEBUG_MACHINE(...)
@@ -60,9 +28,8 @@
 
 #else
 
-#define GET_MACRO(_1, _2, _3, NAME, ...) NAME
-#define DEBUG_MACHINE(...) GET_MACRO(__VA_ARGS__, DEBUG_OR_TRACE_MACHINE_STATE, DEBUG_MACHINE_2, DEBUG_MACHINE_1)(__VA_ARGS__)
-#define TRACE_MACHINE(...) GET_MACRO(__VA_ARGS__, TRACE_MACHINE_STATE, TRACE_MACHINE_2, TRACE_MACHINE_1)(__VA_ARGS__)
+#define DEBUG_MACHINE(...) GET_MACHINE_MACRO(__VA_ARGS__, DEBUG_OR_TRACE_MACHINE_STATE, DEBUG_MACHINE_2, DEBUG_MACHINE_1)(__VA_ARGS__)
+#define TRACE_MACHINE(...) GET_MACHINE_MACRO(__VA_ARGS__, TRACE_MACHINE_STATE, TRACE_MACHINE_2, TRACE_MACHINE_1)(__VA_ARGS__)
 
 #define TRACE_MACHINE_STATE(type, state, meta) \
   if (this->debug()) {                         \

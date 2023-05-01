@@ -2,8 +2,8 @@
 #include "LedMachine.h"
 
 #include "Carrier.h"
+#include "Debug.h"
 #include "StateMachine.h"
-#include "Utils.h"
 
 #ifndef DEBUG_LED
 #define DEBUG_LED false
@@ -19,9 +19,11 @@ LedMachine::LedMachine(int aButton)
       button(aButton),
       count(1) {}
 
+#ifdef DEBUG_OR_TRACE
 bool LedMachine::traceState(int state) {
   return state == BlinkOn || state == BlinkOff;
 }
+#endif
 
 void LedMachine::reset() {
   color = NULL;

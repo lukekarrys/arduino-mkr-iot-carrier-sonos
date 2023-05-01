@@ -2,7 +2,8 @@
 
 #include <Arduino.h>
 
-#include "Utils.h"
+#include "Consts.h"
+#include "Debug.h"
 
 StateMachine::StateMachine(String aDebugName, String* aStateStrings, bool aDebug)
     : iDebugName(aDebugName), iStateStrings(aStateStrings), iDebug(aDebug) {
@@ -24,6 +25,7 @@ void StateMachine::enter(int enterState, int exitState, unsigned long sinceChang
 void StateMachine::exit(int exitState, int enterState) {}
 void StateMachine::ready() {}
 
+#ifdef DEBUG_OR_TRACE
 bool StateMachine::debug() {
 #ifdef DEBUG_ALL
   return true;
@@ -43,6 +45,7 @@ String StateMachine::debugName() {
 String StateMachine::stateString(int index) {
   return iStateStrings[index];
 }
+#endif
 
 void StateMachine::setState(int newState) {
   TRACE_MACHINE("SET_STATE", newState, "");

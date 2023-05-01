@@ -4,27 +4,19 @@
 #include <Arduino.h>
 #include <WiFiNINA.h>
 
+#include "Enum.h"
 #include "StateMachine.h"
 
 class WiFiMachine : public StateMachine {
  public:
   WiFiMachine(const char *ssid, const char *password);
 
-  enum States {
-    Error,
-    Connect,
-    Check,
-    Backoff,
-    Connected,
-  };
-  String stateStrings[5] = {
-      "Error",
-      "Connect",
-      "Check",
-      "Backoff",
-      "Connected",
-  };
-  static States states;
+  ENUM_STATES(
+      Error,
+      Connect,
+      Check,
+      Backoff,
+      Connected, );
 
   void reset();
   void ready();

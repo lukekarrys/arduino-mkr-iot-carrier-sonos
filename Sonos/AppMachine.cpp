@@ -3,12 +3,13 @@
 
 #include "ButtonMachine.h"
 #include "Carrier.h"
+#include "Consts.h"
+#include "Debug.h"
 #include "DisplayMachine.h"
 #include "LedMachine.h"
 #include "PlayerMachine.h"
 #include "SensorMachine.h"
 #include "StateMachine.h"
-#include "Utils.h"
 #include "WiFiMachine.h"
 
 #ifndef DEBUG_APP

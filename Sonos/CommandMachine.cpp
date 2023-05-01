@@ -5,7 +5,7 @@
 #include <URLEncoder.h>
 #include <WiFiNINA.h>
 
-#include "Utils.h"
+#include "Consts.h"
 
 #ifndef DEBUG_COMMAND
 #define DEBUG_COMMAND false

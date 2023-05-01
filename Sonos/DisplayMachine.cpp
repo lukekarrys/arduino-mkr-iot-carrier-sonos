@@ -3,11 +3,23 @@
 
 #include "Carrier.h"
 #include "StateMachine.h"
-#include "Utils.h"
 
 #ifndef DEBUG_DISPLAY
 #define DEBUG_DISPLAY false
 #endif
+
+#define TOP_Y 42
+#define TEXT_3_STEP 24
+#define TEXT_3_CHAR 9
+#define TEXT_2_STEP 16
+#define MARGIN 5
+
+#define SCREEN_WIDTH 240
+#define CENTER 120
+
+#define MESSAGE 50
+#define CONTROLS 215
+#define PLAY_STATE 110
 
 DisplayMachine::DisplayMachine()
     : StateMachine("DISPLAY", stateStrings, DEBUG_DISPLAY) {}
@@ -310,9 +322,9 @@ void DisplayMachine::redraw() {
                                playButton[1].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN);
 
       carrier.display.getTextBounds(action[0], 0, 0, &x1, &y1, &w, &h);
-      playAction1X = (WIDTH - w) / 2;
+      playAction1X = (SCREEN_WIDTH - w) / 2;
       carrier.display.getTextBounds(action[1], 0, 0, &x1, &y1, &w, &h);
-      playAction2X = (WIDTH - w) / 2;
+      playAction2X = (SCREEN_WIDTH - w) / 2;
 
       this->drawPositionString(action, playAction1X, CONTROLS, playAction2X, CONTROLS, actionColor[0], actionColor[0] != actionColor[1]);
       this->drawString(title, MARGIN, TOP_Y);

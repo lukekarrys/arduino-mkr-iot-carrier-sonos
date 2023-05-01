@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include <WiFiNINA.h>
 
+#include "Consts.h"
 #include "StateMachine.h"
-#include "Utils.h"
 
 #ifndef DEBUG_WIFI
 #define DEBUG_WIFI false

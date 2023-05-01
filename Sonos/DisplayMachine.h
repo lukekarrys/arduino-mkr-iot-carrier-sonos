@@ -4,27 +4,19 @@
 #include <Arduino.h>
 
 #include "Carrier.h"
+#include "Enum.h"
 #include "StateMachine.h"
 
 class DisplayMachine : public StateMachine {
  public:
   DisplayMachine();
 
-  enum States {
-    WiFi,
-    Sonos,
-    Error,
-    Player,
-    Sleep,
-  };
-  String stateStrings[5] = {
-      "WiFi",
-      "Sonos",
-      "Error",
-      "Player",
-      "Sleep",
-  };
-  static States states;
+  ENUM_STATES(
+      WiFi,
+      Sonos,
+      Error,
+      Player,
+      Sleep, );
 
   void setStale();
   void printLine(String str);

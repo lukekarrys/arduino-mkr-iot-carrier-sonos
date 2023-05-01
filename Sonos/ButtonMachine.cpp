@@ -6,19 +6,26 @@
 #include <WiFiNINA.h>
 
 #include "Carrier.h"
-#include "Utils.h"
+#include "Consts.h"
+#include "Debug.h"
 
 #ifndef DEBUG_BUTTON
 #define DEBUG_BUTTON false
 #endif
 
+#define HOLD 1000
+#define TAP 40
+#define DOUBLE_TAP 100
+
 ButtonMachine::ButtonMachine(touchButtons aButton)
     : StateMachine("BUTTON_" + String(aButton), stateStrings, DEBUG_BUTTON),
       button(aButton) {}
 
+#ifdef DEBUG_OR_TRACE
 bool ButtonMachine::traceState(int state) {
   return state != Tap && state != Hold && state != TapHold && state != DoubleTap;
 }
+#endif
 
 void ButtonMachine::reset() {
   prevDown = 0;

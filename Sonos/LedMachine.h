@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#include "Debug.h"
+#include "Enum.h"
 #include "StateMachine.h"
 
 class LedMachine : public StateMachine {
@@ -10,19 +12,11 @@ class LedMachine : public StateMachine {
   LedMachine();
   LedMachine(int aButton);
 
-  enum States {
-    Off,
-    On,
-    BlinkOn,
-    BlinkOff,
-  };
-  String stateStrings[4] = {
-      "Off",
-      "On",
-      "BlinkOn",
-      "BlinkOff",
-  };
-  static States states;
+  ENUM_STATES(
+      Off,
+      On,
+      BlinkOn,
+      BlinkOff, );
 
   void reset();
   void ready();
@@ -34,7 +28,9 @@ class LedMachine : public StateMachine {
   void blink(uint32_t aColor, unsigned long aDuration);
 
  protected:
+#ifdef DEBUG_OR_TRACE
   bool traceState(int state) override;
+#endif
 
   void poll(int state, unsigned long since) override;
   void enter(int enterState, int exitState, unsigned long since) override;

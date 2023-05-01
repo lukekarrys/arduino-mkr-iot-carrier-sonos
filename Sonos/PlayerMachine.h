@@ -4,6 +4,7 @@
 #include "ButtonMachine.h"
 #include "CommandMachine.h"
 #include "DisplayMachine.h"
+#include "Enum.h"
 #include "LedMachine.h"
 #include "SonosMachine.h"
 #include "StateMachine.h"
@@ -13,25 +14,14 @@ class PlayerMachine : public StateMachine {
   PlayerMachine(DisplayMachine *displayMachine, LedMachine *ledsMachine, const char *server, uint16_t port);
   PlayerMachine(DisplayMachine *displayMachine, LedMachine *ledsMachine, const char *server, uint16_t port, String initialRoom);
 
-  enum States {
-    Error,
-    Connect,
-    Connected,
-    Ready,
-    Action,
-    Result,
-    Locked,
-  };
-  String stateStrings[7] = {
-      "Error",
-      "Connect",
-      "Connected",
-      "Ready",
-      "Action",
-      "Result",
-      "Locked",
-  };
-  static States states;
+  ENUM_STATES(
+      Error,
+      Connect,
+      Connected,
+      Ready,
+      Action,
+      Result,
+      Locked, );
 
   void run();
   void reset();
