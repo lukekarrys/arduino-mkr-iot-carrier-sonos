@@ -19,6 +19,7 @@ class SonosMachine : public StateMachine {
       Zones,
       Connect,
       Connected,
+      PendingUpdate,
       Update, );
 
   void reset();
@@ -60,6 +61,7 @@ class SonosMachine : public StateMachine {
 
   String response;
 
+  bool readEvent();
   bool setSonos(String response);
   void setRooms(String response);
 

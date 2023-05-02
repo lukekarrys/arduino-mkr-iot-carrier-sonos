@@ -96,8 +96,13 @@ bool PlayerMachine::isConnected() {
   return connectedState != Error && connectedState != Connect;
 }
 
-bool PlayerMachine::isSleepy() {
-  return this->getSinceChange() > SLEEP && sonosMachine.getSinceChange() > SLEEP && commandMachine.getSinceChange() > SLEEP;
+unsigned long PlayerMachine::sleepSinceChange() {
+  const unsigned long p = this->getSinceChange();
+  const unsigned long s = sonosMachine.getSinceChange();
+  const unsigned long c = commandMachine.getSinceChange();
+  unsigned long ret = max(p, s);
+  ret = max(ret, c);
+  return ret;
 }
 
 void PlayerMachine::ready() {
@@ -150,7 +155,7 @@ void PlayerMachine::exit(int state, int enterState) {
 
     case Locked:
       displayMachine->drawPlayerControls(ST77XX_WHITE);
-      commandMachine.resetSinceChange();
+      commandMachine.ready();
       break;
   }
 }
@@ -224,13 +229,6 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
         sonosMachine.playing);
   }
 
-#ifdef AUTO_LOCK
-  if (this->isConnected() && state != Locked && commandMachine.getSinceChange() > LOCK) {
-    this->setState(Locked);
-    return;
-  }
-#endif
-
   switch (state) {
     case Connected:
       if (sinceChange > ROOMS_WAIT) {
@@ -281,6 +279,10 @@ void PlayerMachine::handleCommand() {
     case CommandMachine::Error:
       actionError = true;
       this->setState(Result);
+      break;
+
+    case CommandMachine::Locked:
+      this->setState(Locked);
       break;
   }
 }

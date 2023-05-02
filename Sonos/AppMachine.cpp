@@ -147,12 +147,18 @@ void AppMachine::poll(int state, unsigned long sinceChange) {
 
     case Player:
       if (sinceChange > MINUTE) {
-        if (playerMachine.isSleepy()) {
-          this->setState(Sleep);
-        } else {
-          this->resetSinceChange();
-        }
+        this->checkSleep();
       }
       break;
+  }
+}
+
+void AppMachine::checkSleep() {
+  const unsigned long sleep = playerMachine.sleepSinceChange();
+  if (sleep > SLEEP) {
+    this->setState(Sleep);
+  } else {
+    DEBUG_MACHINE("SLEEP_CHECK", String((SLEEP - sleep) / MINUTE) + "m");
+    this->resetSinceChange();
   }
 }

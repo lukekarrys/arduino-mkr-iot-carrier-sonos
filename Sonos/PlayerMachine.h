@@ -27,7 +27,7 @@ class PlayerMachine : public StateMachine {
   void reset();
   void ready();
   bool isConnected();
-  bool isSleepy();
+  unsigned long sleepSinceChange();
 
   String errorReason = "";
 

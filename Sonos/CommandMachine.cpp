@@ -68,7 +68,13 @@ void CommandMachine::enter(int state, int exitState, unsigned long sinceChange) 
       this->resetClient();
       this->get();
       break;
+
+    case Locked:
+      this->resetClient();
+      break;
   }
+
+  lockCheck = NOW;
 }
 
 void CommandMachine::poll(int state, unsigned long sinceChange) {
@@ -82,6 +88,17 @@ void CommandMachine::poll(int state, unsigned long sinceChange) {
         DEBUG_MACHINE("STATUS", String(statusCode));
         this->setState(statusCode == SUCCESS ? Success : Error);
       }
+      break;
+
+    case Ready:
+#ifdef AUTO_LOCK
+      if (sinceChange > LOCK) {
+        this->setState(Locked);
+      } else if ((NOW - lockCheck) > MINUTE) {
+        DEBUG_MACHINE("LOCK_CHECK", String((LOCK - sinceChange) / MINUTE) + "m");
+        lockCheck = NOW;
+      }
+#endif
       break;
   }
 }

@@ -16,7 +16,8 @@ class CommandMachine : public StateMachine {
       Ready,
       Connect,
       Success,
-      Error, );
+      Error,
+      Locked, );
 
   void reset();
   void ready();
@@ -35,6 +36,8 @@ class CommandMachine : public StateMachine {
   String commandPath;
   void get();
   void resetClient();
+
+  unsigned long lockCheck = 0;
 };
 
 #endif

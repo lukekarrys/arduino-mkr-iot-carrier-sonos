@@ -48,7 +48,7 @@ void SonosMachine::resetClient() {
 
 bool SonosMachine::isConnected() {
   const int state = this->getState();
-  return state == Connected || state == Update;
+  return state == Connected || state == Update || state == PendingUpdate;
 }
 
 void SonosMachine::ready() {
@@ -167,26 +167,38 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
       break;
 
     case Connected:
-      if (!client.connected()) {
-        this->ready();
-      } else if (client.available()) {
-        const char c = client.read();
-        if (c == '\n') {
-          response.remove(0, 6);
-          bool didUpdate = false;
-          if (response.length()) {
-            didUpdate = this->setSonos(response);
-          }
-          if (didUpdate) {
-            this->setState(Update);
-          }
-          response = "";
-        } else {
-          response += c;
-        }
+      if (this->readEvent()) {
+        this->setState(PendingUpdate);
+      }
+      break;
+
+    case PendingUpdate:
+      if (this->readEvent()) {
+        this->resetSinceChange();
+      } else if (sinceChange > 100) {
+        this->setState(Update);
       }
       break;
   }
+}
+
+bool SonosMachine::readEvent() {
+  bool didUpdate = false;
+  if (!client.connected()) {
+    this->ready();
+  } else if (client.available()) {
+    const char c = client.read();
+    if (c == '\n') {
+      response.remove(0, 6);
+      if (response.length()) {
+        didUpdate = this->setSonos(response);
+      }
+      response = "";
+    } else {
+      response += c;
+    }
+  }
+  return didUpdate;
 }
 
 void SonosMachine::setRooms(String rawResponse) {
