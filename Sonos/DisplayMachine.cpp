@@ -54,6 +54,7 @@ void DisplayMachine::exit(int state, int enterState) {
       this->unsetValue(shuffle);
       this->unsetValue(volume);
       this->unsetValue(playButton);
+      this->unsetValue(playButtonColor);
       this->unsetValue(action);
       this->unsetValue(actionColor);
       break;
@@ -85,7 +86,9 @@ void DisplayMachine::enter(int state, int exitState, unsigned long sinceChange) 
     case Player:
       this->resetScreen(ST77XX_BLACK, ST77XX_WHITE, false);
       this->drawPlayerControls();
+      this->drawPlayPauseControl();
       this->setValue(actionColor, ST77XX_WHITE);
+      this->setValue(playButtonColor, ST77XX_WHITE);
 
       carrier.display.setTextSize(3);
       carrier.display.setCursor(MARGIN, TOP_Y + (TEXT_3_STEP * 3) + TEXT_2_STEP);
@@ -218,6 +221,8 @@ void DisplayMachine::drawPlayerControls() {
   this->drawPlayerControls(foregroundColor);
 }
 void DisplayMachine::drawPlayerControls(uint16_t c) {
+  this->setValue(playButtonColor, c);
+  this->setValue(actionColor, c);
   carrier.display.setTextColor(c);
   carrier.display.setTextSize(3);
   carrier.display.setCursor(MARGIN, MARGIN);
@@ -228,8 +233,16 @@ void DisplayMachine::drawPlayerControls(uint16_t c) {
   carrier.display.print("<");
   carrier.display.setCursor(CONTROLS, CONTROLS);
   carrier.display.print(">");
+  this->drawPlayPauseControl();
   this->setStale();
   carrier.display.setTextColor(foregroundColor);
+}
+void DisplayMachine::drawPlayPauseControl() {
+  carrier.display.setTextSize(3);
+  this->drawPositionString(playButton,
+                           playButton[0].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN,
+                           playButton[1].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN,
+                           playButtonColor[0], playButtonColor[0] != playButtonColor[1]);
 }
 
 void DisplayMachine::resetScreen(uint16_t bg, uint16_t fg, bool textWrap) {
@@ -316,16 +329,14 @@ void DisplayMachine::redraw() {
       break;
 
     case Player:
-      carrier.display.setTextSize(3);
-      this->drawPositionString(playButton,
-                               playButton[0].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN,
-                               playButton[1].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN);
+      this->drawPlayPauseControl();
 
       carrier.display.getTextBounds(action[0], 0, 0, &x1, &y1, &w, &h);
       playAction1X = (SCREEN_WIDTH - w) / 2;
       carrier.display.getTextBounds(action[1], 0, 0, &x1, &y1, &w, &h);
       playAction2X = (SCREEN_WIDTH - w) / 2;
 
+      carrier.display.setTextSize(3);
       this->drawPositionString(action, playAction1X, CONTROLS, playAction2X, CONTROLS, actionColor[0], actionColor[0] != actionColor[1]);
       this->drawString(title, MARGIN, TOP_Y);
       this->drawString(artist, MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);

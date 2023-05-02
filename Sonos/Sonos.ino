@@ -12,7 +12,7 @@ void setup() {
   delay(2000);
 
   carrier.withCase();
-  // carrier.Buttons.updateConfig(200);
+  carrier.Buttons.updateConfig(200);
   carrier.leds.setBrightness(1);
 
   if (!carrier.begin()) {

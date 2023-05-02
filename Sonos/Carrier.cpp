@@ -9,3 +9,9 @@ uint32_t LedOff = carrier.leds.Color(0, 0, 0);
 uint32_t LedBlue = carrier.leds.Color(0, 0, 255);
 uint32_t LedYellow = carrier.leds.Color(255, 255, 0);
 uint32_t LedRed = carrier.leds.Color(255, 0, 0);
+
+void Buzzer(int f, unsigned long d) {
+#ifdef USE_BUZZER
+  carrier.Buzzer.beep(f, d);
+#endif
+}

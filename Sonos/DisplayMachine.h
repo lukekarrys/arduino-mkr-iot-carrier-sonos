@@ -47,6 +47,7 @@ class DisplayMachine : public StateMachine {
   void setPlayerAction(String action, uint16_t color);
   void drawPlayerControls();
   void drawPlayerControls(uint16_t color);
+  void drawPlayPauseControl();
 
  protected:
   void poll(int state, unsigned long since) override;
@@ -97,6 +98,10 @@ class DisplayMachine : public StateMachine {
   String shuffle[2] = {"", ""};
   String volume[2] = {"", ""};
   String playButton[2] = {"", ""};
+  uint16_t playButtonColor[2] = {
+      0,
+      0,
+  };
 
   String action[2] = {"", ""};
   uint16_t actionColor[2] = {

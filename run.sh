@@ -42,24 +42,31 @@ for i in "${d[@]}"; do
   EXTRA_FLAGS="$EXTRA_FLAGS -DDEBUG_$i=true"
 done
 
+EXTRA_FLAGS="$EXTRA_FLAGS -DAUTO_LOCK"
+# EXTRA_FLAGS="$EXTRA_FLAGS -DUSE_BUZZER"
+
+function arduino_cli {
+  arduino-cli --config-file ./arduino-cli.yaml "$@"
+}
+
 function compile () {
-  echo "$@"
-  arduino-cli compile --fqbn $FQBN "$SKETCH" --build-property "compiler.cpp.extra_flags=$EXTRA_FLAGS" $RAW_OPTS
+  echo "Flags: $EXTRA_FLAGS"
+  arduino_cli compile --fqbn $FQBN "$SKETCH" --build-property "compiler.cpp.extra_flags=$EXTRA_FLAGS" $RAW_OPTS
 }
 
 function install () {
-  arduino-cli lib install Arduino_MKRIoTCarrier
-  arduino-cli lib install ArduinoHttpClient
-  arduino-cli lib install ArduinoJson
-  arduino-cli lib install --git-url https://github.com/lukekarrys/WiFiNINA.git
+  arduino_cli lib install Arduino_MKRIoTCarrier
+  arduino_cli lib install ArduinoHttpClient
+  arduino_cli lib install ArduinoJson
+  arduino_cli lib install --git-url https://github.com/lukekarrys/WiFiNINA.git
 }
 
 function upload () {
-  arduino-cli upload -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
+  arduino_cli upload -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
 }
 
 function monitor () {
-  arduino-cli monitor -p $PORT $RAW_OPTS
+  arduino_cli monitor -p $PORT $RAW_OPTS
 }
 
 if [[ "$COMMAND" == "compile" ]]; then
@@ -73,9 +80,7 @@ elif [[ "$COMMAND" == "monitor" ]]; then
 elif [[ -z "$COMMAND" ]]; then
   compile
   upload
-  if [[ $EXTRA_FLAGS ]]; then
-    monitor
-  fi
+  monitor
 else
-  arduino-cli "$COMMAND" -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
+  arduino_cli "$COMMAND" -p $PORT --fqbn $FQBN "$SKETCH" $RAW_OPTS
 fi

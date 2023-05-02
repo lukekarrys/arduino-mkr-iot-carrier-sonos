@@ -186,7 +186,7 @@ void PlayerMachine::enter(int state, int exitState, unsigned long sinceChange) {
     case Result:
       DEBUG_MACHINE("RESULT", String(actionButton) + " / " + String(actionError));
       if (actionError) {
-        carrier.Buzzer.beep(SAD_BEEP, 20);
+        Buzzer(SAD_BEEP, 20);
       }
       commandMachine.ready();
       displayMachine->setPlayerAction(actionMessage, actionError ? ST77XX_RED : ST77XX_GREEN);
@@ -224,10 +224,12 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
         sonosMachine.playing);
   }
 
+#ifdef AUTO_LOCK
   if (this->isConnected() && state != Locked && commandMachine.getSinceChange() > LOCK) {
     this->setState(Locked);
     return;
   }
+#endif
 
   switch (state) {
     case Connected:
@@ -305,7 +307,7 @@ void PlayerMachine::handleButtons() {
   }
   if (actionButton != -1) {
     DEBUG_MACHINE("HANDLE_BUTTON", actionButton);
-    carrier.Buzzer.beep(HAPPY_BEEP, 20);
+    Buzzer(HAPPY_BEEP, 20);
     ledMachines[actionButton]->on(LedBlue);
   }
 }

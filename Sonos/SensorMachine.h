@@ -25,9 +25,9 @@ class SensorMachine : public StateMachine {
   void reset();
   void ready();
 
-  int battery;
-  int temperature;
-  int humidity;
+  int battery = 0;
+  float temperature = 0;
+  float humidity = 0;
 
  protected:
   void poll(int state, unsigned long since) override;

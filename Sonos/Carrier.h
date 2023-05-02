@@ -11,4 +11,6 @@ extern uint32_t LedBlue;
 extern uint32_t LedYellow;
 extern uint32_t LedRed;
 
+extern void Buzzer(int f, unsigned long d);
+
 #endif

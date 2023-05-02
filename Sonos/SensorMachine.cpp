@@ -36,12 +36,12 @@ void SensorMachine::setBattery() {
 }
 
 void SensorMachine::setTemperature() {
-  float celsius = (carrier.Env.readTemperature() * (9 / 5)) + 32;
-  temperature = (int)celsius;
+  float celsius = carrier.Env.readTemperature();
+  temperature = (celsius * 1.8) + 32;
 }
 
 void SensorMachine::setHumidity() {
-  humidity = (int)carrier.Env.readHumidity();
+  humidity = carrier.Env.readHumidity();
 }
 
 void SensorMachine::ready() {
