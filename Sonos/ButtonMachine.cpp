@@ -28,10 +28,10 @@ bool ButtonMachine::traceState(int state) {
 #endif
 
 void ButtonMachine::reset() {
+  StateMachine::reset();
   prevDown = 0;
   prevUp = 0;
   prevTouch = 0;
-  StateMachine::reset();
 }
 
 void ButtonMachine::ready() {

@@ -26,12 +26,12 @@ bool LedMachine::traceState(int state) {
 #endif
 
 void LedMachine::reset() {
+  StateMachine::reset();
   color = NULL;
   duration = 0;
   blinkDuration = 0;
   carrier.leds.fill(LedOff, button, count);
   carrier.leds.show();
-  StateMachine::reset();
 }
 
 void LedMachine::ready() {

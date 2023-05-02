@@ -17,6 +17,8 @@ SensorMachine::SensorMachine()
 }
 
 void SensorMachine::reset() {
+  StateMachine::reset();
+
   analogReference(AR_DEFAULT);
   analogReadResolution(12);
 
