@@ -81,18 +81,16 @@ https://user-images.githubusercontent.com/542108/236306044-578de611-f258-4daf-8c
 
 ### Sleep
 
-![](./docs/sleep.jpeg)
+<img src="./docs/sleep.jpeg" width=50%>
 
 ### WiFi
 
-![](./docs/wifi.jpeg)
+<img src="./docs/wifi.jpeg" width=50%>
 
 ### Sonos Rooms
 
-![](./docs/rooms.jpeg)
+<img src="./docs/rooms.jpeg" width=50%>
 
 ### Player
 
-![](./docs/player.jpeg)
-
-
+<img src="./docs/player.jpeg" width=50%>
