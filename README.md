@@ -27,49 +27,55 @@
 1. Find board `fqbn` and `port` with `arduino-cli board list`
 1. Run `./run.sh -b $FQBN -p $PORT -d ALL`
 
-## Sleep/Wake
+## Features
+
+### Sleep/Wake
 
 The device will go to sleep after `SLEEP`ms (see [Utils.h](./Sonos/Utils.h)) if the player state has not changed.
 
 You can also trigger sleep/wake manually by a `Tap Hold` action on `Button 0`.
 
-## Button Lock
+### Button Lock
 
 The player buttons will lock (indicated by the controls turning red) after `LOCK`ms (see [Utils.h](./Sonos/Utils.h)) if no commands have been initiated from the player buttons.
 
 You can also trigger lock/unlock manually by a `Tap Hold` action on `Button 4`.
 
-## Player Buttons
+### Player Buttons
 
-### Button 0
+#### Button 0
 
 - **Tap**: Previous Track
 - **Double Tap**: First Track
 - **Hold**: Previous Room
 
-### Button 1
+#### Button 1
 
 - **Tap**: Volume -1
 - **Double Tap**: Volume -5
 - **Hold**: Toggle Mute
 
-### Button 2
+#### Button 2
 
 - **Tap**: Toggle Play/Pause
 - **Double Tap**: Toggle Shuffle
 - **Hold**: Toggle Repeat All/One/None
 
-### Button 3
+#### Button 3
 
 - **Tap**: Volume +1
 - **Double Tap**: Volume +5
 - **Hold**: Toggle Mute
 
-### Button 4
+#### Button 4
 
 - **Tap**: Next Track
 - **Double Tap**:
 - **Hold**: Next Room
+
+## Demo
+
+https://user-images.githubusercontent.com/542108/236306044-578de611-f258-4daf-8c45-21f37a0cd9cf.mov
 
 ## Pics
 
