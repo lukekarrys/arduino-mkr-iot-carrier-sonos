@@ -13,7 +13,7 @@
 #define DEBUG_BUTTON false
 #endif
 
-#define HOLD 1000
+#define HOLD SECOND
 #define TAP 40
 #define DOUBLE_TAP 100
 

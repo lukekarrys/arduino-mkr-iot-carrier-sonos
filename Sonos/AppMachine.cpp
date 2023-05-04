@@ -158,7 +158,7 @@ void AppMachine::checkSleep() {
   if (sleep > SLEEP) {
     this->setState(Sleep);
   } else {
-    DEBUG_MACHINE("SLEEP_CHECK", String((SLEEP - sleep) / MINUTE) + "m");
+    DEBUG_MACHINE("SLEEP_CHECK", MIN_STR(SLEEP - sleep));
     this->resetSinceChange();
   }
 }

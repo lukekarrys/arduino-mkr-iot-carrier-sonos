@@ -95,7 +95,7 @@ void CommandMachine::poll(int state, unsigned long sinceChange) {
       if (sinceChange > LOCK) {
         this->setState(Locked);
       } else if ((NOW - lockCheck) > MINUTE) {
-        DEBUG_MACHINE("LOCK_CHECK", String((LOCK - sinceChange) / MINUTE) + "m");
+        DEBUG_MACHINE("LOCK_CHECK", MIN_STR(LOCK - sinceChange));
         lockCheck = NOW;
       }
 #endif

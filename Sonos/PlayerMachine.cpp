@@ -4,7 +4,7 @@
 #include "Consts.h"
 
 #define ROOMS_WAIT 2000
-#define RESULT_WAIT 1000
+#define RESULT_WAIT SECOND
 
 #ifndef DEBUG_PLAYER
 #define DEBUG_PLAYER false
@@ -100,9 +100,10 @@ unsigned long PlayerMachine::sleepSinceChange() {
   const unsigned long p = this->getSinceChange();
   const unsigned long s = sonosMachine.getSinceChange();
   const unsigned long c = commandMachine.getSinceChange();
-  unsigned long ret = max(p, s);
-  ret = max(ret, c);
-  return ret;
+  unsigned long minSince = min(p, s);
+  minSince = min(minSince, c);
+  DEBUG_MACHINE("SINCE_CHANGE", "Player:" + SEC_STR(p) + " Sonos:" + SEC_STR(s) + " Command:" + SEC_STR(c) + " Min:" + SEC_STR(minSince));
+  return minSince;
 }
 
 void PlayerMachine::ready() {
