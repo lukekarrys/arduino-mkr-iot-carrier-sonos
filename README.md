@@ -3,8 +3,8 @@
 ## Prereqs:
 
 - Install `arduino-cli`
-- Have an instance of [`node-sonos-http-api`](https://github.com/lukekarrys/node-sonos-http-api) running and accessible
-- Have an [Arduino MKR IoT Carrier](https://store-usa.arduino.cc/products/arduino-mkr-iot-carrier)
+- Have an instance of my fork of [`node-sonos-http-api`](https://github.com/lukekarrys/node-sonos-http-api) running and accessible
+- Have an [Arduino MKR IoT Carrier](https://store-usa.arduino.cc/products/arduino-mkr-iot-carrier) + [Arduino MKR WiFi 1010](https://store-usa.arduino.cc/products/arduino-mkr-wifi-1010)
 
 ## Steps
 
