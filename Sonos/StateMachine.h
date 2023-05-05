@@ -7,7 +7,6 @@
 
 class StateMachine {
  public:
-  StateMachine(String debugName, String* stateStrings);
   StateMachine(String debugName, String* stateStrings, bool debug);
 
   virtual void reset();

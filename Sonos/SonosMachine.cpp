@@ -12,6 +12,8 @@
 #define DEBUG_SONOS false
 #endif
 
+#define DISPLAY_DEBOUNCE 100
+
 SonosMachine::SonosMachine(const char *aServer, uint16_t aPort)
     : StateMachine("SONOS", stateStrings, DEBUG_SONOS),
       client(HttpClient(wifi, aServer, aPort)) {
@@ -35,7 +37,7 @@ void SonosMachine::reset() {
   roomIndex = -1;
   roomSize = 0;
   hasRooms = false;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < MAX_ROOMS; i++) {
     rooms[i] = "";
   }
 
@@ -175,7 +177,7 @@ void SonosMachine::poll(int state, unsigned long sinceChange) {
     case PendingUpdate:
       if (this->readEvent()) {
         this->resetSinceChange();
-      } else if (sinceChange > 100) {
+      } else if (sinceChange > DISPLAY_DEBOUNCE) {
         this->setState(Update);
       }
       break;
@@ -244,6 +246,8 @@ void SonosMachine::setRooms(String rawResponse) {
 }
 
 bool SonosMachine::setSonos(String rawResponse) {
+  TRACE_MACHINE("SET_SONOS", rawResponse);
+
   if (!rawResponse.length()) {
     volume = 0;
     mute = false;
@@ -255,8 +259,6 @@ bool SonosMachine::setSonos(String rawResponse) {
     playing = false;
     return (true);
   }
-
-  TRACE_MACHINE("SET_SONOS", rawResponse);
 
   DynamicJsonDocument doc(2048);
   DeserializationError error = deserializeJson(doc, rawResponse);

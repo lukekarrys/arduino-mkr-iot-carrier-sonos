@@ -98,7 +98,7 @@ void AppMachine::enter(int state, int exitState, unsigned long sinceChange) {
       wifiMachine.reset();
       ledsMachine.reset();
       playerMachine.reset();
-      displayMachine.sleep("Sleep", "Sleeping. Tap and hold button 0 to restart.");
+      displayMachine.sleep("Sleep", "Sleeping. Tap and hold button 0 to wake.");
       break;
 
     case Error:
@@ -106,7 +106,7 @@ void AppMachine::enter(int state, int exitState, unsigned long sinceChange) {
       wifiMachine.reset();
       ledsMachine.on(LedRed);
       playerMachine.reset();
-      displayMachine.error("Error", errorReason + ". Tap and hold button 0 to restart.");
+      displayMachine.error("Error", errorReason + ". Tap and hold button 0 to reset.");
       break;
   }
 }
@@ -147,18 +147,17 @@ void AppMachine::poll(int state, unsigned long sinceChange) {
 
     case Player:
       if (sinceChange > MINUTE) {
-        this->checkSleep();
+        this->checkSleep(playerMachine.sleepSinceChange());
       }
       break;
   }
 }
 
-void AppMachine::checkSleep() {
-  const unsigned long sleep = playerMachine.sleepSinceChange();
-  if (sleep > SLEEP) {
+void AppMachine::checkSleep(unsigned long sinceChange) {
+  if (sinceChange > SLEEP) {
     this->setState(Sleep);
   } else {
-    DEBUG_MACHINE("SLEEP_CHECK", MIN_STR(SLEEP - sleep));
+    DEBUG_MACHINE("SLEEP_CHECK", MIN_STR(SLEEP - sinceChange));
     this->resetSinceChange();
   }
 }

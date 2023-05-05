@@ -9,10 +9,6 @@ StateMachine::StateMachine(String aDebugName, String* aStateStrings, bool aDebug
     : iDebugName(aDebugName), iStateStrings(aStateStrings), iDebug(aDebug) {
 }
 
-StateMachine::StateMachine(String aDebugName, String* aStateStrings)
-    : iDebugName(aDebugName), iStateStrings(aStateStrings) {
-}
-
 void StateMachine::reset() {
   state = -1;
   prevState = -1;

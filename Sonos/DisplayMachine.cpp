@@ -14,12 +14,22 @@
 #define TEXT_2_STEP 16
 #define MARGIN 5
 
-#define SCREEN_WIDTH 240
-#define CENTER 120
-
 #define MESSAGE 50
 #define CONTROLS 215
 #define PLAY_STATE 110
+
+#define SCREEN_WIDTH 240
+#define CENTER(c) 120 - (c)
+
+#define LEFT(c) MARGIN, (c)
+#define TOP_CENTER(c) CENTER(TEXT_3_CHAR* c), MARGIN
+#define TOP_LEFT MARGIN, MARGIN
+#define TOP_RIGHT CONTROLS, MARGIN
+#define BOT_LEFT MARGIN, CONTROLS
+#define BOT_RIGHT CONTROLS, CONTROLS
+#define BOT(c) (c), CONTROLS
+
+#define MOVE_CURSOR(c) carrier.display.getCursorY() + (c)
 
 DisplayMachine::DisplayMachine()
     : StateMachine("DISPLAY", stateStrings, DEBUG_DISPLAY) {}
@@ -85,21 +95,22 @@ void DisplayMachine::enter(int state, int exitState, unsigned long sinceChange) 
 
     case Player:
       this->resetScreen(ST77XX_BLACK, ST77XX_WHITE, false);
+
       this->drawPlayerControls();
       this->drawPlayPauseControl();
       this->setValue(actionColor, ST77XX_WHITE);
       this->setValue(playButtonColor, ST77XX_WHITE);
 
       carrier.display.setTextSize(3);
-      carrier.display.setCursor(MARGIN, TOP_Y + (TEXT_3_STEP * 3) + TEXT_2_STEP);
+      carrier.display.setCursor(LEFT(TOP_Y + (TEXT_3_STEP * 3) + TEXT_2_STEP));
 
       carrier.display.setTextSize(2);
       carrier.display.print("Repeat:");
-      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
+      carrier.display.setCursor(LEFT(MOVE_CURSOR(TEXT_3_STEP)));
       carrier.display.print("Shuffle:");
-      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
+      carrier.display.setCursor(LEFT(MOVE_CURSOR(TEXT_3_STEP)));
       carrier.display.print("Volume:");
-      carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
+      carrier.display.setCursor(LEFT(MOVE_CURSOR(TEXT_3_STEP)));
       break;
   }
 
@@ -223,26 +234,32 @@ void DisplayMachine::drawPlayerControls() {
 void DisplayMachine::drawPlayerControls(uint16_t c) {
   this->setValue(playButtonColor, c);
   this->setValue(actionColor, c);
+
   carrier.display.setTextColor(c);
   carrier.display.setTextSize(3);
-  carrier.display.setCursor(MARGIN, MARGIN);
+
+  carrier.display.setCursor(TOP_LEFT);
   carrier.display.print("-");
-  carrier.display.setCursor(CONTROLS, MARGIN);
+  carrier.display.setCursor(TOP_RIGHT);
   carrier.display.print("+");
-  carrier.display.setCursor(MARGIN, CONTROLS);
+  carrier.display.setCursor(BOT_LEFT);
   carrier.display.print("<");
-  carrier.display.setCursor(CONTROLS, CONTROLS);
+  carrier.display.setCursor(BOT_RIGHT);
   carrier.display.print(">");
+
   this->drawPlayPauseControl();
-  this->setStale();
   carrier.display.setTextColor(foregroundColor);
+
+  this->setStale();
 }
 void DisplayMachine::drawPlayPauseControl() {
   carrier.display.setTextSize(3);
-  this->drawPositionString(playButton,
-                           playButton[0].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN,
-                           playButton[1].length() == 1 ? (CENTER - TEXT_3_CHAR) : (CENTER - TEXT_3_CHAR * 2), MARGIN,
-                           playButtonColor[0], playButtonColor[0] != playButtonColor[1]);
+  this->drawPositionString(
+      playButton,
+      TOP_CENTER(playButton[0].length()),
+      TOP_CENTER(playButton[1].length()),
+      playButtonColor[0],
+      playButtonColor[1]);
 }
 
 void DisplayMachine::resetScreen(uint16_t bg, uint16_t fg, bool textWrap) {
@@ -255,15 +272,15 @@ void DisplayMachine::resetScreen(uint16_t bg, uint16_t fg, bool textWrap) {
 
 void DisplayMachine::drawBasicScreen(String title[2], String message[2], bool drawSensors) {
   carrier.display.setTextSize(3);
-  this->drawString(title, MARGIN, MARGIN);
+  this->drawString(title, LEFT(MARGIN));
   carrier.display.setTextSize(2);
-  this->drawString(message, MARGIN, MESSAGE);
+  this->drawString(message, LEFT(MESSAGE));
   if (drawSensors) {
-    this->drawString(battery, MARGIN, CONTROLS + MARGIN);
-    this->drawString(humidity, MARGIN, carrier.display.getCursorY() - TEXT_3_STEP);
-    this->drawString(temperature, MARGIN, carrier.display.getCursorY() - TEXT_3_STEP);
+    this->drawString(battery, LEFT(CONTROLS + MARGIN));
+    this->drawString(humidity, LEFT(MOVE_CURSOR(-TEXT_3_STEP)));
+    this->drawString(temperature, LEFT(MOVE_CURSOR(-TEXT_3_STEP)));
   }
-  carrier.display.setCursor(MARGIN, MESSAGE + TEXT_3_STEP);
+  carrier.display.setCursor(LEFT(MESSAGE + TEXT_3_STEP));
 }
 
 void DisplayMachine::drawString(String strs[2], int x, int y) {
@@ -283,16 +300,16 @@ void DisplayMachine::drawString(String strs[2], int x, int y, uint16_t fgColor) 
 }
 
 void DisplayMachine::drawPositionString(String strs[2], int x, int y, int x2, int y2) {
-  this->drawPositionString(strs, x, y, x2, y2, foregroundColor, false);
+  this->drawPositionString(strs, x, y, x2, y2, foregroundColor, foregroundColor);
 }
 
-void DisplayMachine::drawPositionString(String strs[2], int x, int y, int x2, int y2, uint16_t fgColor, bool force) {
-  if (strs[0] != strs[1] || force) {
+void DisplayMachine::drawPositionString(String strs[2], int x, int y, int x2, int y2, uint16_t colors[2]) {
+  if (strs[0] != strs[1] || colors[0] != colors[1]) {
     carrier.display.setCursor(x2, y2);
     carrier.display.setTextColor(backgroundColor);
     carrier.display.print(strs[1]);
     carrier.display.setCursor(x, y);
-    carrier.display.setTextColor(fgColor);
+    carrier.display.setTextColor(colors[0]);
     carrier.display.print(strs[0]);
     strs[1] = strs[0];
   }
@@ -300,7 +317,7 @@ void DisplayMachine::drawPositionString(String strs[2], int x, int y, int x2, in
 
 void DisplayMachine::printLine(String str) {
   carrier.display.print(str);
-  carrier.display.setCursor(MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
+  carrier.display.setCursor(LEFT(MOVE_CURSOR(TEXT_3_STEP)));
 }
 
 void DisplayMachine::redraw() {
@@ -337,15 +354,16 @@ void DisplayMachine::redraw() {
       playAction2X = (SCREEN_WIDTH - w) / 2;
 
       carrier.display.setTextSize(3);
-      this->drawPositionString(action, playAction1X, CONTROLS, playAction2X, CONTROLS, actionColor[0], actionColor[0] != actionColor[1]);
-      this->drawString(title, MARGIN, TOP_Y);
-      this->drawString(artist, MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
-      this->drawString(album, MARGIN, carrier.display.getCursorY() + TEXT_3_STEP);
+      this->drawPositionString(action, BOT(playAction1X), BOT(playAction2X), actionColor[0], actionColor[1]);
+
+      this->drawString(title, LEFT(TOP_Y));
+      this->drawString(artist, LEFT(MOVE_CURSOR(TEXT_3_STEP)));
+      this->drawString(album, LEFT(MOVE_CURSOR(TEXT_3_STEP)));
 
       carrier.display.setTextSize(2);
-      this->drawString(repeat, PLAY_STATE, carrier.display.getCursorY() + TEXT_3_STEP + TEXT_2_STEP);
-      this->drawString(shuffle, PLAY_STATE, carrier.display.getCursorY() + TEXT_3_STEP);
-      this->drawString(volume, PLAY_STATE, carrier.display.getCursorY() + TEXT_3_STEP);
+      this->drawString(repeat, PLAY_STATE, MOVE_CURSOR(TEXT_3_STEP + TEXT_2_STEP));
+      this->drawString(shuffle, PLAY_STATE, MOVE_CURSOR(TEXT_3_STEP));
+      this->drawString(volume, PLAY_STATE, MOVE_CURSOR(TEXT_3_STEP));
       break;
   }
 }

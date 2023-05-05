@@ -37,6 +37,7 @@ class CommandMachine : public StateMachine {
   void get();
   void resetClient();
 
+  void autoLock(unsigned long sinceChane);
   unsigned long lockCheck = 0;
 };
 

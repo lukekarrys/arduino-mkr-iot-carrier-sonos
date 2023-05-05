@@ -68,7 +68,7 @@ class DisplayMachine : public StateMachine {
   void drawString(String strs[2], int x, int y);
   void drawString(String strs[2], int x, int y, uint16_t fgColor);
   void drawPositionString(String strs[2], int x, int y, int x2, int y2);
-  void drawPositionString(String strs[2], int x, int y, int x2, int y2, uint16_t fgColor, bool force);
+  void drawPositionString(String strs[2], int x, int y, int x2, int y2, uint16_t colors[2]);
 
   void setValue(String strs[2], String str);
   void setValue(uint16_t colors[2], uint16_t color);

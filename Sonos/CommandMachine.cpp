@@ -91,14 +91,19 @@ void CommandMachine::poll(int state, unsigned long sinceChange) {
       break;
 
     case Ready:
-#ifdef AUTO_LOCK
-      if (sinceChange > LOCK) {
-        this->setState(Locked);
-      } else if ((NOW - lockCheck) > MINUTE) {
-        DEBUG_MACHINE("LOCK_CHECK", MIN_STR(LOCK - sinceChange));
-        lockCheck = NOW;
-      }
-#endif
+      this->autoLock(sinceChange);
       break;
+  }
+}
+
+void CommandMachine::autoLock(unsigned long sinceChange) {
+#ifndef AUTO_LOCK
+  return;
+#endif
+  if (sinceChange > LOCK) {
+    this->setState(Locked);
+  } else if ((NOW - lockCheck) > MINUTE) {
+    DEBUG_MACHINE("LOCK_CHECK", MIN_STR(LOCK - sinceChange));
+    lockCheck = NOW;
   }
 }

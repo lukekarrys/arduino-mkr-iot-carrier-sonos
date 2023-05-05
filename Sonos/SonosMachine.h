@@ -8,6 +8,8 @@
 #include "Enum.h"
 #include "StateMachine.h"
 
+#define MAX_ROOMS 7
+
 class SonosMachine : public StateMachine {
  public:
   SonosMachine(const char *server, uint16_t port);
@@ -33,7 +35,7 @@ class SonosMachine : public StateMachine {
   void nextRoom();
   void prevRoom();
   String getRoom();
-  String rooms[7] = {};
+  String rooms[MAX_ROOMS] = {};
 
   int volume;
   bool mute;

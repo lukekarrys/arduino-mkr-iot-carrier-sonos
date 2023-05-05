@@ -28,7 +28,7 @@ class AppMachine : public StateMachine {
 
  private:
   void drawSensors();
-  void checkSleep();
+  void checkSleep(unsigned long sinceChange);
 
   LedMachine ledsMachine;
   WiFiMachine wifiMachine;

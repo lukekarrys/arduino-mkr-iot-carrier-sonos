@@ -5,8 +5,8 @@
 
 #define SECOND 1000
 #define MINUTE 60000
-#define SEC_STR(c) String(c / SECOND) + "s"
-#define MIN_STR(c) String(c / MINUTE) + "m"
+#define SEC_STR(c) String((c) / SECOND) + "s"
+#define MIN_STR(c) String((c) / MINUTE) + "m"
 
 #define SLEEP 1800000
 #define LOCK 300000
@@ -14,7 +14,8 @@
 #define SENSOR_CHECK 60000
 
 #define TIMEOUT SECOND
-#define BACKOFF(count) (SECOND * pow(2, count))
+#define BACKOFF(count) (SECOND * count)
+#define EXP_BACKOFF(count) (SECOND * pow(2, count))
 
 #define SUCCESS 200
 
