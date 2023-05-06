@@ -43,11 +43,10 @@ class DisplayMachine : public StateMachine {
 
   void player();
   void setPlayer(String title, String artist, String album, int volume, bool mute, String repeat, bool shuffle, bool playing);
-  void setPlayerAction(String action);
-  void setPlayerAction(String action, uint16_t color);
+  void drawPlayerAction(String action);
+  void drawPlayerAction(String action, uint16_t color);
   void drawPlayerControls();
   void drawPlayerControls(uint16_t color);
-  void drawPlayPauseControl();
 
  protected:
   void poll(int state, unsigned long since) override;
@@ -57,7 +56,6 @@ class DisplayMachine : public StateMachine {
  private:
   uint16_t backgroundColor;
   uint16_t foregroundColor;
-  bool textWrap;
 
   bool stale = false;
 
@@ -65,11 +63,13 @@ class DisplayMachine : public StateMachine {
   void resetScreen(uint16_t bg, uint16_t fg, bool wrap);
   void redraw();
 
-  void drawString(String strs[2], int x, int y);
-  void drawString(String strs[2], int x, int y, uint16_t fgColor);
-  void drawPositionString(String strs[2], int x, int y, int x2, int y2);
-  void drawPositionString(String strs[2], int x, int y, int x2, int y2, uint16_t colors[2]);
+  void drawPlayPauseControl();
+  void drawPlayPauseControl(uint16_t c);
 
+  void drawString(String strs[2], int x, int y);
+  void drawPositionColorString(String strs[2], int x, int y, int x2, int y2, uint16_t colors[2]);
+
+  //   void initValue(uint16_t colors[2], uint16_t color);
   void setValue(String strs[2], String str);
   void setValue(uint16_t colors[2], uint16_t color);
   void unsetValue(String strs[2]);
@@ -98,16 +98,10 @@ class DisplayMachine : public StateMachine {
   String shuffle[2] = {"", ""};
   String volume[2] = {"", ""};
   String playButton[2] = {"", ""};
-  uint16_t playButtonColor[2] = {
-      0,
-      0,
-  };
+  uint16_t playButtonColor[2] = {0, 0};
 
   String action[2] = {"", ""};
-  uint16_t actionColor[2] = {
-      0,
-      0,
-  };
+  uint16_t actionColor[2] = {0, 0};
 };
 
 #endif

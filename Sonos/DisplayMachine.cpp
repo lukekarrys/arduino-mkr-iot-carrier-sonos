@@ -22,7 +22,7 @@
 #define CENTER(c) 120 - (c)
 
 #define LEFT(c) MARGIN, (c)
-#define TOP_CENTER(c) CENTER(TEXT_3_CHAR* c), MARGIN
+#define TOP_CENTER(c) CENTER(TEXT_3_CHAR* c.length()), MARGIN
 #define TOP_LEFT MARGIN, MARGIN
 #define TOP_RIGHT CONTROLS, MARGIN
 #define BOT_LEFT MARGIN, CONTROLS
@@ -96,10 +96,10 @@ void DisplayMachine::enter(int state, int exitState, unsigned long sinceChange) 
     case Player:
       this->resetScreen(ST77XX_BLACK, ST77XX_WHITE, false);
 
+      this->setValue(actionColor, foregroundColor);
+      this->setValue(playButtonColor, foregroundColor);
       this->drawPlayerControls();
       this->drawPlayPauseControl();
-      this->setValue(actionColor, ST77XX_WHITE);
-      this->setValue(playButtonColor, ST77XX_WHITE);
 
       carrier.display.setTextSize(3);
       carrier.display.setCursor(LEFT(TOP_Y + (TEXT_3_STEP * 3) + TEXT_2_STEP));
@@ -136,7 +136,7 @@ void DisplayMachine::setValue(String strs[2], String str) {
 
 void DisplayMachine::setValue(uint16_t colors[2], uint16_t color) {
   colors[0] = color;
-  if (colors[0] == colors[1]) {
+  if (colors[0] != colors[1]) {
     this->setStale();
   }
 }
@@ -221,10 +221,10 @@ void DisplayMachine::setPlayer(String _title, String _artist, String _album, int
   this->setValue(volume, _mute ? "Muted" : String(_volume));
   this->setValue(playButton, _playing ? "||" : ">");
 }
-void DisplayMachine::setPlayerAction(String a) {
-  this->setPlayerAction(a, ST77XX_WHITE);
+void DisplayMachine::drawPlayerAction(String a) {
+  this->drawPlayerAction(a, foregroundColor);
 }
-void DisplayMachine::setPlayerAction(String a, uint16_t c) {
+void DisplayMachine::drawPlayerAction(String a, uint16_t c) {
   this->setValue(action, a);
   this->setValue(actionColor, c);
 }
@@ -232,12 +232,11 @@ void DisplayMachine::drawPlayerControls() {
   this->drawPlayerControls(foregroundColor);
 }
 void DisplayMachine::drawPlayerControls(uint16_t c) {
-  this->setValue(playButtonColor, c);
   this->setValue(actionColor, c);
+  this->drawPlayPauseControl(c);
 
   carrier.display.setTextColor(c);
   carrier.display.setTextSize(3);
-
   carrier.display.setCursor(TOP_LEFT);
   carrier.display.print("-");
   carrier.display.setCursor(TOP_RIGHT);
@@ -247,19 +246,19 @@ void DisplayMachine::drawPlayerControls(uint16_t c) {
   carrier.display.setCursor(BOT_RIGHT);
   carrier.display.print(">");
 
-  this->drawPlayPauseControl();
-  carrier.display.setTextColor(foregroundColor);
+  if (c != foregroundColor) {
+    this->setStale();
+  }
 
-  this->setStale();
+  carrier.display.setTextColor(foregroundColor);
 }
 void DisplayMachine::drawPlayPauseControl() {
+  this->drawPlayPauseControl(playButtonColor[0]);
+}
+void DisplayMachine::drawPlayPauseControl(uint16_t color) {
+  this->setValue(playButtonColor, color);
   carrier.display.setTextSize(3);
-  this->drawPositionString(
-      playButton,
-      TOP_CENTER(playButton[0].length()),
-      TOP_CENTER(playButton[1].length()),
-      playButtonColor[0],
-      playButtonColor[1]);
+  this->drawPositionColorString(playButton, TOP_CENTER(playButton[0]), TOP_CENTER(playButton[1]), playButtonColor);
 }
 
 void DisplayMachine::resetScreen(uint16_t bg, uint16_t fg, bool textWrap) {
@@ -284,32 +283,25 @@ void DisplayMachine::drawBasicScreen(String title[2], String message[2], bool dr
 }
 
 void DisplayMachine::drawString(String strs[2], int x, int y) {
-  this->drawString(strs, x, y, foregroundColor);
-}
-
-void DisplayMachine::drawString(String strs[2], int x, int y, uint16_t fgColor) {
   carrier.display.setCursor(x, y);
   if (strs[0] != strs[1]) {
     carrier.display.setTextColor(backgroundColor);
     carrier.display.print(strs[1]);
     carrier.display.setCursor(x, y);
-    carrier.display.setTextColor(fgColor);
+    carrier.display.setTextColor(foregroundColor);
     carrier.display.print(strs[0]);
     strs[1] = strs[0];
   }
 }
 
-void DisplayMachine::drawPositionString(String strs[2], int x, int y, int x2, int y2) {
-  this->drawPositionString(strs, x, y, x2, y2, foregroundColor, foregroundColor);
-}
-
-void DisplayMachine::drawPositionString(String strs[2], int x, int y, int x2, int y2, uint16_t colors[2]) {
+void DisplayMachine::drawPositionColorString(String strs[2], int x, int y, int x2, int y2, uint16_t colors[2]) {
   if (strs[0] != strs[1] || colors[0] != colors[1]) {
     carrier.display.setCursor(x2, y2);
     carrier.display.setTextColor(backgroundColor);
     carrier.display.print(strs[1]);
     carrier.display.setCursor(x, y);
     carrier.display.setTextColor(colors[0]);
+    colors[1] = colors[0];
     carrier.display.print(strs[0]);
     strs[1] = strs[0];
   }
@@ -354,7 +346,7 @@ void DisplayMachine::redraw() {
       playAction2X = (SCREEN_WIDTH - w) / 2;
 
       carrier.display.setTextSize(3);
-      this->drawPositionString(action, BOT(playAction1X), BOT(playAction2X), actionColor[0], actionColor[1]);
+      this->drawPositionColorString(action, BOT(playAction1X), BOT(playAction2X), actionColor);
 
       this->drawString(title, LEFT(TOP_Y));
       this->drawString(artist, LEFT(MOVE_CURSOR(TEXT_3_STEP)));

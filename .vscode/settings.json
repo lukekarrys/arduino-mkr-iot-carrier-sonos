@@ -50,6 +50,8 @@
     "sstream": "cpp",
     "strstream": "cpp",
     "__locale": "cpp",
-    "__string": "cpp"
+    "__string": "cpp",
+    "queue": "cpp",
+    "stack": "cpp"
   }
 }

@@ -155,7 +155,7 @@ void PlayerMachine::exit(int state, int enterState) {
       break;
 
     case Locked:
-      displayMachine->drawPlayerControls(ST77XX_WHITE);
+      displayMachine->drawPlayerControls();
       commandMachine.ready();
       break;
   }
@@ -167,13 +167,14 @@ void PlayerMachine::enter(int state, int exitState, unsigned long sinceChange) {
       sonosMachine.ready();
       commandMachine.reset();
       ledsMachine->blink(LedYellow, FAST_BLINK);
-      displayMachine->sonos("Sonos:", "Connecting to room:");
+      displayMachine->sonos("Sonos:", "Connecting to server...");
       this->resetButtons();
       break;
 
     case Connected:
       ledsMachine->on(LedYellow);
       commandMachine.ready(sonosMachine.getRoom());
+      displayMachine->setSonos("Connecting to room:");
       for (int i = 0; i < sonosMachine.roomSize; i++) {
         displayMachine->printLine((i == sonosMachine.roomIndex ? "* " : "  ") + sonosMachine.rooms[i]);
       }
@@ -181,12 +182,12 @@ void PlayerMachine::enter(int state, int exitState, unsigned long sinceChange) {
 
     case Ready:
       this->resetAction();
-      displayMachine->setPlayerAction(sonosMachine.getRoom());
+      displayMachine->drawPlayerAction(sonosMachine.getRoom());
       break;
 
     case Action:
       DEBUG_MACHINE("ACTION", actionMessage);
-      displayMachine->setPlayerAction(actionMessage);
+      displayMachine->drawPlayerAction(actionMessage);
       break;
 
     case Result:
@@ -195,12 +196,12 @@ void PlayerMachine::enter(int state, int exitState, unsigned long sinceChange) {
         Buzzer(SAD_BEEP, 20);
       }
       commandMachine.ready();
-      displayMachine->setPlayerAction(actionMessage, actionError ? ST77XX_RED : ST77XX_GREEN);
+      displayMachine->drawPlayerAction(actionMessage, actionError ? ST77XX_RED : ST77XX_GREEN);
       this->resetAction();
       break;
 
     case Locked:
-      displayMachine->setPlayerAction(sonosMachine.getRoom());
+      displayMachine->drawPlayerAction(sonosMachine.getRoom(), ST77XX_RED);
       displayMachine->drawPlayerControls(ST77XX_RED);
       break;
   }
@@ -270,6 +271,7 @@ void PlayerMachine::poll(int state, unsigned long sinceChange) {
 void PlayerMachine::handleCommand() {
   switch (commandMachine.getState()) {
     case CommandMachine::Connect:
+      actionError = false;
       this->setState(Action);
       break;
 
